@@ -29,6 +29,8 @@ interface ChatCompletionResponse {
 // Keep the local Ollama smoke independent from the provider selected for Agent API.
 // OPENAI_MODEL can be an OpenRouter slug that does not exist in local Ollama.
 const requiredOllamaModel = process.env.DEMO_OLLAMA_MODEL?.trim() || "qwen3:8b";
+const requireLocalOllama =
+  process.env.DEMO_REQUIRE_LOCAL_OLLAMA?.trim().toLowerCase() !== "false";
 const ollamaBaseUrl = normalizeBaseUrl(
   process.env.DEMO_OLLAMA_BASE_URL || "http://127.0.0.1:11434/v1",
 );
@@ -76,26 +78,35 @@ await runCheck("project.verify", async () => {
     throw new Error(`npm run verify exit ${child.status ?? "unknown"}: ${tail}`);
   }
   await access("apps/firefox-extension/dist/manifest.json");
-  return "typecheck + 61 tests + builds + web-ext lint; dist/manifest.json exists";
+  return "typecheck + tests + builds + web-ext lint; dist/manifest.json exists";
 });
 
-await runCheck("ollama.models", async () => {
-  const payload = await fetchJson<ModelListResponse>(`${ollamaBaseUrl}/models`, 15_000);
-  const models = payload.data?.flatMap((item) => (item.id ? [item.id] : [])) ?? [];
-  if (!models.includes(requiredOllamaModel)) {
-    throw new Error(`Không có ${requiredOllamaModel}; models=${models.join(",") || "none"}`);
-  }
-  return `${requiredOllamaModel} available`;
-});
+if (requireLocalOllama) {
+  await runCheck("ollama.models", async () => {
+    const payload = await fetchJson<ModelListResponse>(`${ollamaBaseUrl}/models`, 15_000);
+    const models = payload.data?.flatMap((item) => (item.id ? [item.id] : [])) ?? [];
+    if (!models.includes(requiredOllamaModel)) {
+      throw new Error(`Không có ${requiredOllamaModel}; models=${models.join(",") || "none"}`);
+    }
+    return `${requiredOllamaModel} available`;
+  });
 
-await runCheck("ollama.tool_call", async () => {
-  const payload = await callToolSmoke(ollamaBaseUrl, requiredOllamaModel, 180_000);
-  const toolName = payload.choices?.[0]?.message?.tool_calls?.[0]?.function?.name;
-  if (toolName !== "get_viewport_context") {
-    throw new Error(`Expected get_viewport_context; received ${toolName || "no tool call"}`);
-  }
-  return `model=${payload.model || requiredOllamaModel}; tool=${toolName}`;
-});
+  await runCheck("ollama.tool_call", async () => {
+    const payload = await callToolSmoke(ollamaBaseUrl, requiredOllamaModel, 180_000);
+    const toolName = payload.choices?.[0]?.message?.tool_calls?.[0]?.function?.name;
+    if (toolName !== "get_viewport_context") {
+      throw new Error(`Expected get_viewport_context; received ${toolName || "no tool call"}`);
+    }
+    return `model=${payload.model || requiredOllamaModel}; tool=${toolName}`;
+  });
+} else {
+  results.push({
+    name: "ollama.local",
+    status: "SKIPPED_OPTIONAL",
+    detail: "DEMO_REQUIRE_LOCAL_OLLAMA=false; using tunnel provider",
+    durationMs: 0,
+  });
+}
 
 await runCheck("agent_api.health", async () => {
   const payload = await fetchJson<Record<string, unknown>>(`${agentApiBaseUrl}/health`, 10_000);
