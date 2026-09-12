@@ -4,9 +4,88 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Viewport Learning Companion</title>
+    <link rel="stylesheet" href="/src/sidebar/styles.css" />
   </head>
   <body>
-    <main id="app">Đang khởi tạo Learning Companion…</main>
+    <main id="app" class="app-shell" aria-live="polite">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Learning companion</p>
+          <h1>Ngay tại đoạn bạn đang đọc</h1>
+        </div>
+        <span id="source-badge" class="source-badge" data-tone="idle">Đang kiểm tra</span>
+      </header>
+
+      <section class="learning-thread" aria-label="Tiến trình hiện tại">
+        <article class="thread-step" data-step="current">
+          <span class="thread-dot" aria-hidden="true"></span>
+          <div class="thread-content">
+            <p class="step-label">Vị trí hiện tại</p>
+            <h2 id="context-heading">Chưa có nội dung</h2>
+            <p id="context-preview" class="context-preview">
+              Mở sidebar trên một bài viết HTML để bắt đầu.
+            </p>
+          </div>
+        </article>
+
+        <article id="memory-card" class="thread-step" data-step="memory" hidden>
+          <span class="thread-dot" aria-hidden="true"></span>
+          <div class="thread-content memory-content">
+            <div>
+              <p class="step-label">Bạn từng ở đây</p>
+              <h2 id="memory-status">Chưa có dấu mốc</h2>
+            </div>
+            <button id="resume-button" class="text-button" type="button">
+              Quay lại vị trí
+            </button>
+          </div>
+        </article>
+
+        <article class="thread-step" data-step="next">
+          <span class="thread-dot" aria-hidden="true"></span>
+          <div class="thread-content">
+            <p class="step-label">Hỏi về đoạn này</p>
+            <form id="question-form" class="question-form">
+              <label class="sr-only" for="question-input">Câu hỏi</label>
+              <textarea
+                id="question-input"
+                rows="3"
+                maxlength="2000"
+                placeholder="Ví dụ: Ý chính của đoạn này là gì?"
+                disabled
+              ></textarea>
+              <button id="ask-button" class="primary-button" type="submit" disabled>
+                Hỏi Agent
+              </button>
+            </form>
+          </div>
+        </article>
+      </section>
+
+      <section id="answer-panel" class="answer-panel" hidden>
+        <div class="answer-heading">
+          <p class="step-label">Giải thích</p>
+          <span id="grounding-label" class="grounding-label">Theo viewport</span>
+        </div>
+        <div id="answer-content" class="answer-content"></div>
+      </section>
+
+      <section class="marker-panel" aria-labelledby="marker-title">
+        <div>
+          <p class="step-label">Dấu mốc học tập</p>
+          <h2 id="marker-title">Bạn đang ở trạng thái nào?</h2>
+        </div>
+        <div class="marker-actions" role="group" aria-label="Chọn trạng thái học">
+          <button type="button" data-memory-status="UNDERSTOOD" disabled>Đã hiểu</button>
+          <button type="button" data-memory-status="NOT_UNDERSTOOD" disabled>Chưa hiểu</button>
+          <button type="button" data-memory-status="REVIEW_LATER" disabled>Xem lại sau</button>
+        </div>
+      </section>
+
+      <div id="status-message" class="status-message" data-tone="idle" role="status">
+        Đang kết nối với trang hiện tại…
+      </div>
+    </main>
     <script type="module" src="/src/sidebar/main.ts"></script>
   </body>
 </html>
