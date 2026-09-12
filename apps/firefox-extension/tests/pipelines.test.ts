@@ -178,6 +178,41 @@ describe("ask pipeline", () => {
     expect(result).toMatchObject({ ok: false, error: { code: "CONTEXT_STALE" } });
     expect(requestAgentTurn).not.toHaveBeenCalled();
   });
+
+  it("re-queries memories with refreshed anchor when memoryRepository is provided", async () => {
+    const fresh = makeContext(NOW, "fresh-context");
+    const session = makeSession(fresh);
+    session.relatedMemories = [];
+    const searchMemory = vi.fn(async () => ({
+      ok: true as const,
+      data: [{ id: "mem-recaptured", matchScore: 1.0, matchReason: "EXACT_FINGERPRINT" } as any],
+    }));
+    const capture = vi.fn(async () => ({ ok: true as const, data: fresh }));
+    const requestAgentTurn = vi.fn(async (_req: any) => ({
+      ok: true as const,
+      data: makeAgentResponse(),
+    }));
+
+    await runAskAgentPipeline(
+      { question: "Hỏi lại", session },
+      {
+        capture,
+        requestAgentTurn,
+        clock,
+        idGenerator,
+        memoryRepository: fakeRepository({ searchMemory }),
+      },
+    );
+
+    expect(searchMemory).toHaveBeenCalledWith({
+      source: fresh.source,
+      anchor: fresh.anchor,
+      limit: 5,
+    });
+    expect(session.relatedMemories).toHaveLength(1);
+    expect(session.relatedMemories[0]?.id).toBe("mem-recaptured");
+    expect(requestAgentTurn.mock.calls[0]?.[0].relatedMemories[0]?.id).toBe("mem-recaptured");
+  });
 });
 
 describe("executeConfirmedMemoryCommand", () => {

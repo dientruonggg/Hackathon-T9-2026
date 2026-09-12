@@ -45,12 +45,17 @@ const groundingLabel = requireElement<HTMLElement>("#grounding-label");
 const agentProposalPanel = requireElement<HTMLElement>("#agent-proposal-panel");
 const agentProposalText = requireElement<HTMLElement>("#agent-proposal-text");
 const acceptProposalButton = requireElement<HTMLButtonElement>("#accept-proposal-button");
+const refreshContextButton = requireElement<HTMLButtonElement>("#refresh-context-button");
 const markerButtons = Array.from(
   document.querySelectorAll<HTMLButtonElement>("[data-memory-status]"),
 );
 
 let session: ShortSession | undefined;
 let busy = false;
+
+refreshContextButton.addEventListener("click", () => {
+  void refreshViewportContext();
+});
 
 const currentDomainLabel = requireElement<HTMLSpanElement>("#current-domain-label");
 const blockCurrentDomainButton = requireElement<HTMLButtonElement>("#block-current-domain-button");
@@ -237,6 +242,7 @@ async function askCurrentContext(): Promise<void> {
       requestAgentTurn,
       clock: systemClock,
       idGenerator: browserIdGenerator,
+      memoryRepository,
     },
   );
 
@@ -245,6 +251,13 @@ async function askCurrentContext(): Promise<void> {
     renderShellStatus(response.error.message, "danger");
     setBusy(false);
     return;
+  }
+
+  // Cập nhật giao diện vị trí mới nhất đã recapture
+  if (session.context) {
+    contextHeading.textContent = session.context.anchor.heading || session.context.source.title;
+    contextPreview.textContent = session.context.visibleText;
+    renderMemory(session);
   }
 
   const nextMessages: ChatMessage[] = [
@@ -260,6 +273,41 @@ async function askCurrentContext(): Promise<void> {
   questionInput.value = "";
   renderAnswer(response.data);
   renderShellStatus("Câu trả lời chỉ dùng viewport và bộ nhớ được hiển thị.", "success");
+  setBusy(false);
+}
+
+async function refreshViewportContext(): Promise<void> {
+  if (!session?.context || busy) return;
+  setBusy(true);
+  renderShellStatus("Đang cập nhật vị trí mới nhất từ trang web…");
+
+  const refreshed = await captureTabViewport({
+    tabId: session.tabId,
+    expectedUrl: session.context.source.canonicalUrl,
+  });
+
+  if (!refreshed.ok) {
+    renderShellStatus(refreshed.error.message, "danger");
+    setBusy(false);
+    return;
+  }
+
+  session.context = refreshed.data;
+  contextHeading.textContent = session.context.anchor.heading || session.context.source.title;
+  contextPreview.textContent = session.context.visibleText;
+
+  const recalled = await memoryRepository.searchMemory({
+    source: session.context.source,
+    anchor: session.context.anchor,
+    limit: 5,
+  });
+  if (recalled.ok) {
+    session.relatedMemories = recalled.data;
+  }
+  session.status = session.relatedMemories.length > 0 ? "READY_WITH_MEMORY" : "READY";
+  renderMemory(session);
+  void refreshPrivacyMemoryState();
+  renderShellStatus("Đã cập nhật vị trí hiện tại thành công.", "success");
   setBusy(false);
 }
 
@@ -406,6 +454,7 @@ function setBusy(value: boolean): void {
 
 function updateControls(): void {
   const canUseContext = Boolean(session?.context && session.policy?.decision === "ALLOW");
+  refreshContextButton.disabled = busy || !canUseContext;
   questionInput.disabled = busy || !canUseContext;
   askButton.disabled = busy || !canUseContext;
   for (const button of markerButtons) button.disabled = busy || !canUseContext;

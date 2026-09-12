@@ -110,6 +110,14 @@ describe("Slice 2: System Prompt & Pure Tool Registry", () => {
       expect(list.length).toBe(1);
       expect(list[0]?.id).toBe("mem-2");
     }
+
+    // General overview query ("đã học") matches all preloaded memories
+    const result3 = await tool!.execute({ query: "đã học" });
+    expect(result3.ok).toBe(true);
+    if (result3.ok) {
+      const list = result3.data as MemorySummary[];
+      expect(list.length).toBe(2);
+    }
   });
 
   it("read_memory retrieves preloaded memory or returns MEMORY_NOT_FOUND", async () => {

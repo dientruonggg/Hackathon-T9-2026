@@ -20,7 +20,12 @@
         <article class="thread-step" data-step="current">
           <span class="thread-dot" aria-hidden="true"></span>
           <div class="thread-content">
-            <p class="step-label">Vị trí hiện tại</p>
+            <div class="step-header-row">
+              <p class="step-label">Trí nhớ ngắn hạn • Đang xem</p>
+              <button id="refresh-context-button" class="refresh-button" type="button" title="Cập nhật vị trí cuộn / đoạn bôi đen mới nhất" disabled>
+                ↻ Cập nhật vị trí
+              </button>
+            </div>
             <h2 id="context-heading">Chưa có nội dung</h2>
             <p id="context-preview" class="context-preview">
               Mở sidebar trên một bài viết HTML để bắt đầu.
@@ -32,7 +37,7 @@
           <span class="thread-dot" aria-hidden="true"></span>
           <div class="thread-content memory-content">
             <div>
-              <p class="step-label">Bạn từng ở đây</p>
+              <p class="step-label">Trí nhớ dài hạn • Dấu mốc tại vị trí này</p>
               <h2 id="memory-status">Chưa có dấu mốc</h2>
             </div>
             <button id="resume-button" class="text-button" type="button">
@@ -83,7 +88,7 @@
 
       <section class="marker-panel" aria-labelledby="marker-title">
         <div>
-          <p class="step-label">Dấu mốc học tập</p>
+          <p class="step-label">Trí nhớ dài hạn • Đánh dấu trạng thái học</p>
           <h2 id="marker-title">Bạn đang ở trạng thái nào?</h2>
         </div>
         <div class="marker-actions" role="group" aria-label="Chọn trạng thái học">

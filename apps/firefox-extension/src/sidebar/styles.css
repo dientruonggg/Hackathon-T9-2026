@@ -68,6 +68,39 @@ textarea:focus-visible {
   text-transform: uppercase;
 }
 
+.step-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.refresh-button {
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: var(--blue);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background: var(--blue-soft);
+  border-color: var(--blue);
+}
+
+.refresh-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 h1,
 h2,
 p {

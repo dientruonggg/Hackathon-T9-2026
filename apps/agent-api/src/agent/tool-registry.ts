@@ -108,10 +108,22 @@ export function createAgentToolRegistry(
 
       const { query, status, limit = 5 } = parsed.data;
       const lowerQuery = query.toLowerCase().trim();
+      const isGeneralQuery =
+        !lowerQuery ||
+        lowerQuery === "*" ||
+        lowerQuery === "all" ||
+        /^(đã học|học|học gì|những gì|toàn bộ|tất cả|lịch sử|tổng hợp|ôn tập|summary|overview|what did i learn|history|learned)$/i.test(lowerQuery) ||
+        lowerQuery.includes("đã học") ||
+        lowerQuery.includes("học gì") ||
+        lowerQuery.includes("tôi đã học");
 
       const filtered = context.relatedMemories.filter((mem) => {
         if (status && mem.status !== status) {
           return false;
+        }
+
+        if (isGeneralQuery) {
+          return true;
         }
 
         const matchHeading = mem.anchor.heading.toLowerCase().includes(lowerQuery);

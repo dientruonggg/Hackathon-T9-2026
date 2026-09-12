@@ -7,7 +7,7 @@ import type {
   ShortSession,
   ViewportContext,
 } from "@vlc/contracts";
-import type { Clock, IdGenerator } from "@vlc/memory";
+import type { Clock, IdGenerator, MemoryRepository } from "@vlc/memory";
 
 export interface AskAgentPipelineInput {
   question: string;
@@ -19,6 +19,7 @@ export interface AskAgentPipelineDependencies {
   requestAgentTurn(input: AgentTurnRequest): Promise<Result<AgentTurnResponse>>;
   clock: Clock;
   idGenerator: IdGenerator;
+  memoryRepository?: MemoryRepository;
 }
 
 export interface BuildAgentTurnRequestInput {
@@ -65,6 +66,17 @@ export async function runAskAgentPipeline(
   });
   if (!refreshed.ok) return refreshed;
   input.session.context = refreshed.data;
+
+  if (deps.memoryRepository) {
+    const memoryResult = await deps.memoryRepository.searchMemory({
+      source: refreshed.data.source,
+      anchor: refreshed.data.anchor,
+      limit: 5,
+    });
+    if (memoryResult.ok) {
+      input.session.relatedMemories = memoryResult.data;
+    }
+  }
 
   let request: AgentTurnRequest;
   try {
