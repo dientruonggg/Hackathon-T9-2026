@@ -67,10 +67,17 @@ export async function captureTabViewport(
   input: CaptureViewportInput,
 ): Promise<Result<ViewportContext>> {
   try {
-    const response: unknown = await browser.tabs.sendMessage(input.tabId, {
-      type: "CAPTURE_CURRENT_VIEWPORT",
-      payload: input,
-    });
+    let response: unknown;
+    try {
+      response = await requestViewportCapture(input);
+    } catch {
+      // web-ext can open the start URL before the temporary add-on finishes
+      // installing. Inject once on the explicit sidebar action, then retry.
+      await browser.tabs.executeScript(input.tabId, {
+        file: "src/content/index.js",
+      });
+      response = await requestViewportCapture(input);
+    }
     if (!isRecord(response) || typeof response.ok !== "boolean") {
       return failure("INTERNAL_ERROR", "Content script trả phản hồi capture không hợp lệ.", false);
     }
@@ -86,6 +93,13 @@ export async function captureTabViewport(
       false,
     );
   }
+}
+
+function requestViewportCapture(input: CaptureViewportInput): Promise<unknown> {
+  return browser.tabs.sendMessage(input.tabId, {
+    type: "CAPTURE_CURRENT_VIEWPORT",
+    payload: input,
+  });
 }
 
 export async function resumeTabAtMarker(

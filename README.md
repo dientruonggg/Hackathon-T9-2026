@@ -134,6 +134,16 @@ npm run start:firefox --workspace @vlc/firefox-extension
 
 `web-ext run` tạo một Firefox profile tạm riêng; hãy mở article trong chính cửa sổ Firefox mới đó, không chờ add-on xuất hiện ở profile Firefox đang dùng.
 
+Đường demo khuyên dùng:
+
+```powershell
+npm run demo:firefox
+```
+
+Lệnh này dùng profile riêng tại `.firefox-demo-profile`, nên marker trong
+`browser.storage.local` còn lại giữa các lần chạy demo trên cùng máy. Thư mục
+`.firefox-demo-profile` chỉ là dữ liệu local và đã bị Git bỏ qua.
+
 ## Request flow
 
 ```text

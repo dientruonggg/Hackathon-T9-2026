@@ -19,7 +19,7 @@
     "verify": "npm run typecheck && npm test && npm run build && npm run lint:extension",
     "demo:preflight": "node --env-file-if-exists=.env --import tsx scripts/demo-preflight.ts",
     "demo:api": "npm run dev:api",
-    "demo:firefox": "npm run build --workspace @vlc/firefox-extension && npm run start:firefox --workspace @vlc/firefox-extension -- --start-url https://www.w3schools.com/js/js_promise.asp",
+    "demo:firefox": "npm run build --workspace @vlc/firefox-extension && npm run start:firefox --workspace @vlc/firefox-extension -- --firefox-profile ../../.firefox-demo-profile --profile-create-if-missing --keep-profile-changes --start-url https://www.w3schools.com/js/js_promise.asp",
     "dev:api": "npm run dev --workspace @vlc/agent-api",
     "dev:extension": "npm run dev --workspace @vlc/firefox-extension"
   },
