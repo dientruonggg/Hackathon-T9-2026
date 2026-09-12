@@ -1,2 +1,3 @@
-// TODO(Agent 3): export repository, adapter and matcher.
-export {};
+export * from "./memory-repository.js";
+export * from "./browser-storage-memory-repository.js";
+export * from "./memory-matcher.js";
