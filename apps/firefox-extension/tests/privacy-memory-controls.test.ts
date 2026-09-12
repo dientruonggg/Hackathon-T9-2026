@@ -97,4 +97,61 @@ describe("Privacy Memory Controls", () => {
     );
     expect(result.ok).toBe(false);
   });
+
+  it("handles empty blockedDomains list gracefully", async () => {
+    const mockRepo = {
+      getSourcePolicySettings: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { allowedDomains: [], blockedDomains: [], updatedAt: "" }
+      })
+    } as unknown as MemoryRepository;
+
+    const result = await loadPrivacyMemoryState(
+      { currentDomain: "developer.mozilla.org", relatedMemories: [] },
+      { memoryRepository: mockRepo }
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.blockedDomains).toEqual([]);
+      expect(result.data.isCurrentDomainUserBlocked).toBe(false);
+      expect(result.data.relatedMemories).toEqual([]);
+    }
+  });
+
+  it("handles delete with deletedCount 0 when memory does not exist", async () => {
+    const mockRepo = {
+      forgetMemory: vi.fn().mockResolvedValue({ ok: true, data: { deletedCount: 0 } })
+    } as unknown as MemoryRepository;
+
+    const result = await forgetConfirmedMarker(
+      { memoryId: "nonexistent-id", userConfirmed: true },
+      { memoryRepository: mockRepo }
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.deletedCount).toBe(0);
+    }
+  });
+
+  it("PrivacyMemoryState does not retain raw viewport content", async () => {
+    const mockRepo = {
+      getSourcePolicySettings: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { allowedDomains: [], blockedDomains: [], updatedAt: "" }
+      })
+    } as unknown as MemoryRepository;
+
+    const result = await loadPrivacyMemoryState(
+      { currentDomain: "example.com", relatedMemories: [dummyMemory] },
+      { memoryRepository: mockRepo }
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const stateStr = JSON.stringify(result.data);
+      expect(stateStr).not.toContain("CONFIDENTIAL_RAW_VIEWPORT");
+      expect(stateStr).not.toContain("visibleText");
+    }
+  });
 });
+
