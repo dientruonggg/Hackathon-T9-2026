@@ -1,3 +1,11 @@
+
+import {
+  loadPrivacyMemoryState,
+  blockCurrentDomain,
+  unblockDomain,
+  forgetConfirmedMarker,
+  type PrivacyMemoryState
+} from "../pipeline/privacy-memory-controls.js";
 import type {
   AgentTurnResponse,
   ChatMessage,
@@ -37,6 +45,115 @@ const markerButtons = Array.from(
 
 let session: ShortSession | undefined;
 let busy = false;
+
+const currentDomainLabel = requireElement<HTMLSpanElement>("#current-domain-label");
+const blockCurrentDomainButton = requireElement<HTMLButtonElement>("#block-current-domain-button");
+const blockedDomainsList = requireElement<HTMLUListElement>("#blocked-domains-list");
+const emptyBlockedDomains = requireElement<HTMLParagraphElement>("#empty-blocked-domains");
+const pageMarkersList = requireElement<HTMLUListElement>("#page-markers-list");
+const emptyPageMarkers = requireElement<HTMLParagraphElement>("#empty-page-markers");
+
+blockCurrentDomainButton.addEventListener("click", async () => {
+  if (!session?.context || busy) return;
+  setBusy(true);
+  const result = await blockCurrentDomain({ domain: session.context.source.hostname || session.context.source.canonicalUrl, userConfirmed: true }, { memoryRepository });
+  if (result.ok) {
+    renderShellStatus("Đã chặn website này. Mở lại sidebar để áp dụng.", "success");
+    blockCurrentDomainButton.disabled = true;
+    await refreshPrivacyMemoryState();
+  } else {
+    renderShellStatus("Lỗi khi chặn website.", "danger");
+  }
+  setBusy(false);
+});
+
+async function refreshPrivacyMemoryState() {
+  if (!session?.context) return;
+  const result = await loadPrivacyMemoryState({
+    currentDomain: session.context.source.hostname || session.context.source.canonicalUrl,
+    relatedMemories: session.relatedMemories
+  }, { memoryRepository });
+  if (result.ok) {
+    renderPrivacyState(result.data);
+  }
+}
+
+function renderPrivacyState(state: PrivacyMemoryState) {
+  currentDomainLabel.textContent = state.currentDomain;
+  blockCurrentDomainButton.disabled = state.isCurrentDomainUserBlocked;
+  
+  if (state.blockedDomains.length === 0) {
+    emptyBlockedDomains.hidden = false;
+    blockedDomainsList.replaceChildren();
+  } else {
+    emptyBlockedDomains.hidden = true;
+    blockedDomainsList.replaceChildren();
+    for (const domain of state.blockedDomains) {
+      const li = document.createElement("li");
+      li.textContent = domain + " ";
+      const btn = document.createElement("button");
+      btn.textContent = "Gỡ";
+      btn.className = "text-button";
+      btn.onclick = async () => {
+        setBusy(true);
+        const res = await unblockDomain({ domain, userConfirmed: true }, { memoryRepository });
+        if (res.ok) await refreshPrivacyMemoryState();
+        setBusy(false);
+      };
+      li.appendChild(btn);
+      blockedDomainsList.appendChild(li);
+    }
+  }
+
+  if (state.relatedMemories.length === 0) {
+    emptyPageMarkers.hidden = false;
+    pageMarkersList.replaceChildren();
+  } else {
+    emptyPageMarkers.hidden = true;
+    pageMarkersList.replaceChildren();
+    for (const mem of state.relatedMemories) {
+      const li = document.createElement("li");
+      const strong = document.createElement("strong");
+      strong.textContent = formatMemoryStatus(mem.status);
+      li.appendChild(strong);
+      li.appendChild(document.createTextNode(` - ${mem.anchor.heading || 'Text'} (rev ${mem.revision}, ${new Date(mem.updatedAt).toLocaleTimeString()})`));
+      
+      const resumeBtn = document.createElement("button");
+      resumeBtn.textContent = "Resume";
+      resumeBtn.className = "text-button";
+      resumeBtn.onclick = async () => {
+        if (!session || busy) return;
+        setBusy(true);
+        const resumed = await resumeTabAtMarker({
+          tabId: session.tabId,
+          expectedCanonicalUrl: mem.source.canonicalUrl,
+          anchor: mem.anchor,
+        });
+        setBusy(false);
+      };
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Xóa";
+      delBtn.className = "text-button";
+      delBtn.onclick = async () => {
+        if (!confirm("Bạn có chắc muốn xóa dấu mốc này?")) return;
+        setBusy(true);
+        const res = await forgetConfirmedMarker({ memoryId: mem.id, userConfirmed: true }, { memoryRepository });
+        if (res.ok && res.data.deletedCount === 1) {
+          session!.relatedMemories = session!.relatedMemories.filter(m => m.id !== mem.id);
+          await refreshPrivacyMemoryState();
+        }
+        setBusy(false);
+      };
+      
+      li.appendChild(document.createTextNode(" "));
+      li.appendChild(resumeBtn);
+      li.appendChild(document.createTextNode(" "));
+      li.appendChild(delBtn);
+      pageMarkersList.appendChild(li);
+    }
+  }
+}
 
 questionForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -171,6 +288,7 @@ async function saveMarker(status: MemoryStatus): Promise<void> {
   delete session.pendingAction;
   session.status = "READY_WITH_MEMORY";
   renderMemory(session);
+  void refreshPrivacyMemoryState();
   renderShellStatus(`Đã lưu trên Firefox • revision ${saved.data.revision}`, "success");
   setBusy(false);
 }
@@ -216,6 +334,7 @@ function renderSession(value: ShortSession): void {
     contextPreview.textContent = value.context.visibleText;
     renderMemory(value);
     renderShellStatus("Sẵn sàng. Mở sidebar không tự gọi AI.", "success");
+    void refreshPrivacyMemoryState();
   }
 }
 

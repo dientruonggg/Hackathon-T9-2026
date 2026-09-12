@@ -82,6 +82,25 @@
         </div>
       </section>
 
+      <details class="privacy-panel">
+        <summary>Quyền riêng tư & Bộ nhớ</summary>
+        <div class="privacy-content">
+          <div class="privacy-section">
+            <h3>Website không được đọc</h3>
+            <p>Domain hiện tại: <span id="current-domain-label"></span></p>
+            <button id="block-current-domain-button" type="button" class="text-button">Không đọc website này</button>
+            <h4>Danh sách đã chặn:</h4>
+            <ul id="blocked-domains-list"></ul>
+            <p id="empty-blocked-domains" hidden>Bạn chưa chặn website nào.</p>
+          </div>
+          <div class="privacy-section">
+            <h3>Dấu mốc trên trang này</h3>
+            <ul id="page-markers-list"></ul>
+            <p id="empty-page-markers" hidden>Chưa có dấu mốc nào.</p>
+          </div>
+        </div>
+      </details>
+
       <div id="status-message" class="status-message" data-tone="idle" role="status">
         Đang kết nối với trang hiện tại…
       </div>
