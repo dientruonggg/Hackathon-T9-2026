@@ -1,0 +1,24 @@
+{
+  "name": "@vlc/agent-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsup src/server.ts --format esm --clean",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "@vlc/contracts": "*",
+    "fastify": "^5.12.4",
+    "openai": "^7.15.0",
+    "zod": "^4.6.2"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.13"
+  }
+}
