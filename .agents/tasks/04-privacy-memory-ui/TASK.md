@@ -2,7 +2,7 @@
 
 ## Status
 
-READY. Làm song song với task 05 và 06 từ cùng commit `main`.
+READY. Tạo branch từ `BASE_SHA=e1bad51620ec49d77e806d87dd3fe671ca2f7e26`.
 
 ## Mission
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-READY cho phần scripts/docs; Golden E2E chỉ được đánh PASS sau khi merge task 04 và 05. Owner: bạn + Codex.
+READY cho phần scripts/docs từ `BASE_SHA=e1bad51620ec49d77e806d87dd3fe671ca2f7e26`; Golden E2E chỉ được đánh PASS sau khi merge task 04 và 05. Owner: bạn + Codex.
 
 ## Mission
 
