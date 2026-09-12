@@ -25,7 +25,10 @@ export function createOpenAICompatibleProvider(
       apiKey: options.apiKey || "dummy-key-for-local-testing",
       baseURL: options.baseURL,
       timeout: options.timeoutMs,
-      defaultHeaders: options.defaultHeaders
+      defaultHeaders: {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+        ...options.defaultHeaders
+      }
     });
 
   return {
