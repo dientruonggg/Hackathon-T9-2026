@@ -1,6 +1,6 @@
 # Task Agent 1 — Firefox Extension
 
-> Status 2026-09-12: implementation đã được nối vào `main`; automated AC pass. Còn manual golden E2E với Firefox + model thật. Xem `../../architecture/07-integration-status.md`.
+> Status 2026-09-12: core implementation đã được nối vào `main`; automated AC pass. Còn Privacy/Memory UI và manual Golden E2E; xem task `04` và `06`.
 
 ## Mission
 

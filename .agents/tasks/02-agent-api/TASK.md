@@ -1,6 +1,6 @@
 # Task Agent 2 — Agent API
 
-> Status 2026-09-12: implementation đã được nối vào `main`; tests/build/runtime health pass. Còn smoke turn thành công với Ollama/OpenRouter thật. Xem `../../architecture/07-integration-status.md`.
+> Status 2026-09-12: implementation đã được nối vào `main`; tests/build/runtime health pass. Ollama local và tunnel đã pass inference/tool-call smoke. Safe logging theo AC còn thiếu; xem task `05`.
 
 ## Mission
 

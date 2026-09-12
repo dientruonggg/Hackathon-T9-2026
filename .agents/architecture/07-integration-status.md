@@ -1,6 +1,6 @@
 # 07 — Integration Status
 
-Snapshot: 2026-09-12, sau khi hợp nhất `task3`, `agent-api` và remote `main` vào `main` local.
+Snapshot: 2026-09-12, local `main` tại commit tích hợp `6f4c768`.
 
 ## Kết luận hiện tại
 
@@ -17,7 +17,7 @@ Firefox sidebar
   -> Ollama qwen3:8b hoặc OpenRouter
 ```
 
-Không còn file nghiệp vụ placeholder trong ba workspace chính. Phần chưa hoàn tất không phải code scaffold mà là golden E2E với model và thao tác Firefox thật.
+Core path không còn business placeholder. Phần chưa hoàn tất gồm Privacy/Memory UI, safe logs và Golden E2E với thao tác Firefox thật. `search_web` vẫn là permission-gated stub và không thuộc demo bắt buộc.
 
 ## Đã triển khai
 
@@ -66,35 +66,64 @@ web-ext lint: 0 errors, 0 notices, 0 warnings
 web-ext run: temporary add-on được cài thành công
 GET /health: 200, CORS trả đúng moz-extension origin
 POST /v1/agent/turn khi Ollama tắt: 503 AGENT_UNAVAILABLE, retryable=true
+Ollama local qwen3:8b inference: pass, 100% GPU
+Ollama local tool calling: pass, gọi đúng get_viewport_context
+Tunnel /v1/models và /v1/chat/completions: pass
+Cloudflared Windows Service: Running, Automatic
 ```
 
 `web-ext run` chứng minh Firefox nhận manifest và cài add-on. Chưa tuyên bố golden E2E pass vì môi trường automation không nhìn/click được cửa sổ Firefox.
 
 ## Trạng thái model ngày 2026-09-12
 
-- `http://127.0.0.1:11434/api/tags`: chưa kết nối được.
-- `http://127.0.0.1:11434/v1/models`: chưa kết nối được.
-- `https://qwen.luongduytoan.io.vn/`, `/api/tags`, `/v1/models`: trả 502.
+- Ollama CLI `0.32.5` hoạt động tại `127.0.0.1:11434`.
+- `qwen3:8b` và `bge-m3:latest` đã có sẵn.
+- POST local có tool definition trả `finish_reason=tool_calls` và gọi đúng `get_viewport_context`.
+- `https://qwen.luongduytoan.io.vn/v1/models` trả model list.
+- POST qua tunnel trả đúng nội dung smoke `TUNNEL_OK`.
 
-Suy luận: tunnel nhận request nhưng Ollama origin chưa chạy hoặc tunnel đang trỏ sai port. Đây là blocker môi trường, không phải lỗi contract Agent API.
+Model/tunnel không còn là blocker. Demo trên cùng máy vẫn ưu tiên localhost để giảm phụ thuộc mạng.
+
+## Memory thực tế
+
+- Short-term nằm trong biến `session` ở RAM của sidebar: context gần nhất, tối đa 10 chat messages, tối đa 5 memory summaries và pending action. Đóng/reload sidebar có thể mất session này.
+- Long-term nằm trong `browser.storage.local` của Firefox profile, không nằm trong folder repository và backend không giữ bản sao.
+- Keys: `vlc:markers:v1`, `vlc:policy:v1`, `vlc:settings:v1` (key settings mới dành chỗ, chưa có UI sử dụng).
+- Marker chỉ được lưu sau click của người dùng. Nó giữ source/anchor/status, text quote tối đa 240 ký tự, câu hỏi/answer summary tối đa 500 ký tự, evidence, timestamps và revision; không giữ raw viewport 4000 ký tự.
+- Manifest đã có permission `storage`. Không cần và không nên xin quyền đọc folder dự án; Firefox tự quản lý file profile.
+- `browser.storage.local` không được ứng dụng mã hóa thêm. Khi người dùng bấm Ask, viewport và tối đa 5 memory summaries liên quan được truyền tới Agent API/provider để xử lý; backend không chủ động lưu chúng vào database.
+
+## Tools, prompt và phần chưa nối UI
+
+Agent tools có code thật tại `apps/agent-api/src/agent/tool-registry.ts`:
+
+- `get_viewport_context`
+- `search_memory`
+- `read_memory`
+- `propose_marker`
+- `search_web`
+
+`search_web` hiện trả danh sách rỗng nếu được phép và extension đang gửi `allowWebSearch=false`; không quảng bá như search thật.
+
+System prompt thật nằm tại `apps/agent-api/src/agent/system-prompt.ts`.
+
+Repository đã có `searchMemory`, `saveMarker`, `updateUnderstanding`, `forgetMemory`, `getSourcePolicySettings` và `updateSourcePolicy`. Sidebar hiện mới nối recall/save/resume; chưa có UI denylist, list nhiều marker hoặc delete marker.
+
+Agent API hiện chỉ log lúc server start. Task gốc yêu cầu log `turnId`, duration, tool name và error code nhưng không log raw data; phần này còn thiếu.
 
 ## Checklist kế tiếp trước demo
 
-1. Trên Windows, mở Ollama desktop; chỉ chạy `ollama serve` ở terminal riêng nếu port 11434 chưa hoạt động.
-2. Chạy `ollama pull qwen3:8b` nếu `ollama list` chưa có tag này.
-3. Xác nhận `/v1/models`, sau đó POST `/v1/chat/completions` với một tool test và kiểm tra `tool_calls`.
-4. Copy `.env.example` thành `.env`; ưu tiên direct localhost trong ngày demo.
-5. Chạy `npm run dev:api`, sau đó kiểm `GET /health`.
-6. Build/load extension và mở hoặc reload một article HTML sau khi add-on được cài.
-7. Chạy toàn bộ golden E2E trong `05-integration-e2e.md`.
-8. Trong Extension Debugger, inspect `browser.storage.local` để xác nhận marker tồn tại, cùng marker ID và revision tăng.
-9. Quay video demo chỉ sau khi luồng hỏi model thật và reopen memory đều pass.
+1. Task `04`: Privacy/Memory UI (denylist, marker list, forget).
+2. Task `05`: safe observability cho Agent API.
+3. Task `06`: harness chạy, inspect storage, Firefox Temporary Add-on/signed package và Golden E2E.
+4. Merge `04`/`05`, sau đó chạy root verify và Golden E2E từ `06`.
+5. Quay video demo chỉ sau khi ask, save, reopen, recall, resume và block/unblock đều được quan sát thật.
 
 Giữ `API_PORT=8787`; extension hiện cố định URL và host permission cho port này.
 
 ## Fallback
 
-- Ollama/tunnel lỗi: đổi `.env` sang OpenRouter; không sửa source.
+- Ollama/tunnel lỗi trở lại: đổi `.env` sang OpenRouter; không sửa source.
 - Model quá chậm: warm model bằng một request trước demo và giữ `OPENAI_TIMEOUT_MS=60000`.
 - Agent API lỗi: marker local vẫn hoạt động; nhưng video E2E chính phải có ít nhất một lượt hỏi thành công.
 - Firefox không inject content script vào tab cũ: reload article sau khi cài Temporary Add-on.

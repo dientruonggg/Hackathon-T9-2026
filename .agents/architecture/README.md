@@ -14,7 +14,8 @@ Thư mục này là nguồn kiến trúc chuẩn để ba nhánh code cùng lúc
 8. [`05-integration-e2e.md`](05-integration-e2e.md) — cách ghép ba nhánh và tiêu chí demo.
 9. [`06-one-day-plan.md`](06-one-day-plan.md) — timebox và fallback cho ngày thi.
 10. [`07-integration-status.md`](07-integration-status.md) — trạng thái code/verify hiện tại và checklist trước demo.
-11. [`../tasks/README.md`](../tasks/README.md) — ownership, nhánh và thứ tự merge.
+11. [`08-last-mile-plan.md`](08-last-mile-plan.md) — ba workstream cuối, seam giao tiếp và thứ tự merge.
+12. [`../tasks/README.md`](../tasks/README.md) — ownership, nhánh và thứ tự merge.
 
 ## Quyết định đã khóa
 

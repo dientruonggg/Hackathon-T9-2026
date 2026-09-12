@@ -1,6 +1,6 @@
 # Task Agent 3 — Shared Contracts, Memory và Workspace
 
-> Status 2026-09-12: implementation đã được nối vào `main`; contracts/memory tests pass và storage keys đã chuẩn hóa. Xem `../../architecture/07-integration-status.md`.
+> Status 2026-09-12: implementation đã được nối vào `main`; contracts/memory tests pass và storage keys đã chuẩn hóa. Repository đã có search/save/update/forget/policy; đưa các operation ra UI thuộc task `04`.
 
 ## Mission
 
