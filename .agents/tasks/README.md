@@ -11,7 +11,7 @@ Các task `01`–`03` bên dưới được giữ làm acceptance criteria và l
 Tạo cả ba branch từ cùng `BASE_SHA` sau khi tài liệu này được push. Mỗi người chỉ sửa ownership của mình.
 
 ```text
-BASE_SHA: e1bad51620ec49d77e806d87dd3fe671ca2f7e26
+BASE_SHA: 0ce94d0dfdb5dbfaa1ff870817c3f9156f845133
 ```
 
 Commit này chứa đầy đủ task contract. Mỗi agent phải checkout đúng `BASE_SHA`, tạo branch của mình rồi chạy `git rev-parse HEAD` để xác nhận trước khi code. Commit sau `BASE_SHA` chỉ đóng dấu lại chính SHA này, không đổi task contract.
