@@ -16,10 +16,12 @@ import {
   type TurnToolContext,
   type AgentToolDependencies
 } from "./tool-registry.js";
+import type { AgentObserver } from "../observability/agent-observer.js";
 
 export interface AgentDependencies {
   provider: LlmProvider;
   toolDeps?: AgentToolDependencies;
+  observer?: AgentObserver | undefined;
 }
 
 export async function runAgentTurn(
@@ -114,6 +116,14 @@ export async function runAgentTurn(
             status: "SUCCESS"
           });
 
+          deps.observer?.emit({
+            event: "agent.tool.completed",
+            turnId: input.turnId,
+            step: step as 1 | 2 | 3,
+            toolName: tc.name as AgentToolName,
+            status: "SUCCESS"
+          });
+
           if (tc.name === "propose_marker") {
             suggestedActions.push(toolResult.data as PendingUserAction);
           }
@@ -130,6 +140,16 @@ export async function runAgentTurn(
             status: "ERROR",
             errorCode: toolResult.error.code
           });
+
+          deps.observer?.emit({
+            event: "agent.tool.completed",
+            turnId: input.turnId,
+            step: step as 1 | 2 | 3,
+            toolName: tc.name as AgentToolName,
+            status: "ERROR",
+            errorCode: toolResult.error.code
+          });
+
           messages.push({
             role: "tool",
             toolCallId: tc.id,

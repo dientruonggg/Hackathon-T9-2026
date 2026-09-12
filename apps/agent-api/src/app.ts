@@ -4,10 +4,12 @@ import type { LlmProvider } from "./providers/llm-provider.js";
 import { type EnvConfig, loadEnvConfig } from "./config/env.js";
 import { healthRoutes } from "./routes/health.js";
 import { agentTurnRoutes } from "./routes/agent-turn.js";
+import type { AgentObserver } from "./observability/agent-observer.js";
 
 export interface AppDependencies {
   provider?: LlmProvider | undefined;
   config?: EnvConfig | undefined;
+  observer?: AgentObserver | undefined;
 }
 
 export function buildApp(deps: AppDependencies = {}): FastifyInstance {
@@ -42,11 +44,10 @@ export function buildApp(deps: AppDependencies = {}): FastifyInstance {
 
   // Register endpoints
   app.register(healthRoutes);
-  if (deps.provider) {
-    app.register(agentTurnRoutes, { provider: deps.provider });
-  } else {
-    app.register(agentTurnRoutes);
-  }
+  app.register(agentTurnRoutes, {
+    provider: deps.provider,
+    observer: deps.observer
+  });
 
   return app;
 }
