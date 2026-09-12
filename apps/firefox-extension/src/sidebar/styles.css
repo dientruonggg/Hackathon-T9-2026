@@ -235,9 +235,44 @@ textarea:disabled {
 }
 
 .answer-panel,
+.agent-proposal-panel,
 .marker-panel {
   margin: 12px 0 0 32px;
   padding: 14px;
+}
+
+.agent-proposal-panel {
+  background: #f0f7ff;
+  border: 1px solid #cce3ff;
+  border-radius: 12px;
+}
+
+.proposal-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.proposal-badge {
+  background: var(--blue);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.proposal-text {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.proposal-action-button {
+  width: 100%;
+  margin-top: 4px;
 }
 
 .answer-content {

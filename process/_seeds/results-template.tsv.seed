@@ -1,0 +1,5 @@
+# Benchmark & Metric Evaluation Registry (RIPER-5 Framework)
+# Instantiate as results.tsv in task workspace when tracking performance, latency, memory, or eval metrics.
+iteration	timestamp	slice_id	metric_name	baseline	observed	unit	diff_pct	status	notes
+0	2026-01-01T00:00:00Z	baseline	p99_latency_ms	100.0	100.0	ms	0.0%	BASELINE	Initial baseline measurement
+1	2026-01-01T01:00:00Z	slice-01	p99_latency_ms	100.0	75.0	ms	-25.0%	PASS	Optimization slice 1 applied

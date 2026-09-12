@@ -1,0 +1,56 @@
+# Multi-Phase Program: [PROG-ID] [Program Name]
+
+<program_umbrella_plan version="2.0" framework="RIPER-5">
+
+<metadata>
+  <program_id>[PROG-ID]</program_id>
+  <lead>@engineering_lead</lead>
+  <target_timeline>[e.g. Sprint 1-3]</target_timeline>
+</metadata>
+
+## 1. Executive Strategy & Outcome
+<strategy>
+  <target_outcome>
+    [High-level measurable architectural or business goal.]
+  </target_outcome>
+
+  <system_impact>
+    [Affected subsystems, downstream services, or performance targets.]
+  </system_impact>
+</strategy>
+
+---
+
+## 2. Phase Breakdown & Blast Radius
+<phase_breakdown>
+  <phase number="1" id="phase-01">
+    <title>[Domain Models & Port Interfaces]</title>
+    <scope>`src/domain/`, `src/application/port_*`</scope>
+    <blast_radius level="LOW">Zero external dependency impacts</blast_radius>
+    <status>NOT_STARTED</status>
+  </phase>
+
+  <phase number="2" id="phase-02">
+    <title>[Infrastructure Adapters & Persistence]</title>
+    <scope>`src/infrastructure/`</scope>
+    <blast_radius level="MEDIUM">Depends on Phase 01 domain contracts</blast_radius>
+    <status>NOT_STARTED</status>
+  </phase>
+
+  <phase number="3" id="phase-03">
+    <title>[API Exposure & End-to-End Integration]</title>
+    <scope>`src/api/`</scope>
+    <blast_radius level="HIGH">Exposes public HTTP endpoints and DTO contracts</blast_radius>
+    <status>NOT_STARTED</status>
+  </phase>
+</phase_breakdown>
+
+---
+
+## 3. Global Invariants & Phase Gate Rules
+<phase_gates>
+  <rule>Every phase must pass 100% of validation commands before the next phase begins.</rule>
+  <rule>No phase may introduce breaking changes to existing public APIs without prior approval.</rule>
+</phase_gates>
+
+</program_umbrella_plan>

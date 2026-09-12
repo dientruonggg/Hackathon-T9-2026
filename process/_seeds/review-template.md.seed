@@ -1,0 +1,151 @@
+# Review: [REVIEW-ID] [Task ID]
+
+<review_artifact task_id="[TASK-ID]" review_id="[REVIEW-ID]" version="1.0" framework="RIPER-5">
+
+<!-- READ-ONLY PHASE. May run verification commands. No code fixes during review. -->
+<review_status>
+  <phase>REVIEW</phase>
+  <mode>READ-ONLY</mode>
+  <reviewer></reviewer>
+  <reviewer_harness></reviewer_harness>  <!-- e.g. human-pair / independent-subagent / cross-model-harness -->
+  <last_updated></last_updated>
+</review_status>
+
+---
+
+## 1. Review Scope
+
+<review_scope>
+  <task_spec>[Link to task.md]</task_spec>
+  <plan>[Link to plan.md]</plan>
+  <diff>[git diff range or PR link]</diff>
+  <tests>[Test suite path(s) executed]</tests>
+</review_scope>
+
+---
+
+## 2. Behavior Review
+
+<behavior_review>
+
+| AC | Expected | Actual | Evidence | Result |
+|---|---|---|---|---|
+| AC-1 | | | | PASS / FAIL |
+| AC-2 | | | | PASS / FAIL |
+| AC-3 | | | | PASS / FAIL |
+
+</behavior_review>
+
+---
+
+## 3. Architecture Review
+
+<architecture_review>
+  <dependency_direction>[Are imports flowing in the correct direction per architecture rules?]</dependency_direction>
+  <boundary_violations>[Any cross-boundary calls that violate the declared scope?]</boundary_violations>
+  <unnecessary_abstraction>[Any indirection added without justification?]</unnecessary_abstraction>
+  <unrelated_refactor>[Any changes not required by the task spec?]</unrelated_refactor>
+</architecture_review>
+
+---
+
+## 4. Data Review
+
+<data_review>
+  <transaction>[Transaction boundaries correct? No partial commits?]</transaction>
+  <consistency>[Data consistency guaranteed under concurrent writes?]</consistency>
+  <concurrency>[Race conditions, lock contention, optimistic locking?]</concurrency>
+  <migration>[Any schema changes backward-compatible?]</migration>
+  <constraints>[DB constraints respected?]</constraints>
+</data_review>
+
+---
+
+## 5. Security Review
+
+<security_review>
+  <authentication>[Auth context checked where required?]</authentication>
+  <authorization>[Permission checks in place?]</authorization>
+  <validation>[Input validation and sanitization complete?]</validation>
+  <secrets>[No secrets, tokens, or credentials in code or logs?]</secrets>
+  <injection>[SQL/command injection vectors covered?]</injection>
+  <sensitive_logging>[No PII or sensitive data written to logs?]</sensitive_logging>
+</security_review>
+
+---
+
+## 6. Regression Review
+
+<regression_review>
+  <existing_behavior>[Existing tests still passing? No previously green tests now failing?]</existing_behavior>
+  <backward_compatibility>[Public API / schema backward-compatible?]</backward_compatibility>
+  <existing_tests>[Were existing tests modified without justification?]</existing_tests>
+</regression_review>
+
+---
+
+## 7. Findings
+
+<findings>
+
+| ID | Category | Severity | Type | Evidence | File/Symbol | Required Action |
+|---|---|---|---|---|---|---|
+| F-1 | Behavior | HIGH | Confirmed Defect | | | |
+
+<!-- Category: Behavior | Architecture | Data | Security | Regression | Scope -->
+<!-- Severity: CRITICAL | HIGH | MEDIUM | LOW | INFO -->
+<!-- Type: Confirmed Defect | Risk requiring validation | Optional Improvement -->
+
+</findings>
+
+---
+
+## 8. Verification Matrix
+
+<verification_matrix>
+
+| AC / Risk | Verifier | Result | Evidence | Unverified |
+|---|---|---|---|---|
+| AC-1 | | PASS / FAIL | | |
+| AC-2 | | PASS / FAIL | | |
+| AC-3 | | PASS / FAIL | | |
+
+</verification_matrix>
+
+---
+
+## 9. Residual Risk
+
+<residual_risk>
+  [Risks that remain after review. Must be explicitly accepted before Gate 3 passes.]
+  -
+</residual_risk>
+
+---
+
+## 10. Review Decision
+
+<review_decision>
+  <!-- Choose one: PASS | CHANGES_REQUIRED | BLOCKED -->
+  <decision></decision>
+  <rationale></rationale>
+</review_decision>
+
+---
+
+## Gate 3 — Review Passed
+
+<gate id="G3">
+  - [ ] Full diff reviewed (zero extraneous changes).
+  - [ ] Independent review verified (implementer was not sole reviewer).
+  - [ ] Housekeeping complete: all transient debug logs, print statements, and scratch files removed.
+  - [ ] All required evidence exists and is attached.
+  - [ ] All findings triaged (Confirmed Defects resolved or risk-accepted).
+  - [ ] Residual risk explicitly accepted.
+  - [ ] Review decision: PASS.
+  - [ ] Ready for handoff.
+  <approved_by></approved_by>  <!-- Engineer name (PAIR) or [AUTO: DELEGATED] (DELEGATED/Fast-Track) -->
+  <approved_date></approved_date>
+</gate>
+
+</review_artifact>

@@ -1,0 +1,79 @@
+# Handoff: [TASK-ID]
+
+<handoff task_id="[TASK-ID]" version="2.0" framework="RIPER-5">
+
+<!-- Final projection. Short. Do not duplicate research/plan/review artifacts. -->
+<!-- Answer: What changed? Why? What proves it? What remains risky? -->
+
+<handoff_status>
+  <review_decision>PASS</review_decision>  <!-- Must be PASS before handoff is valid -->
+  <review_artifact>[Link to review.md]</review_artifact>
+  <completed_date></completed_date>
+</handoff_status>
+
+---
+
+## 1. What Changed
+
+<what_changed>
+  [Concise summary of the behavior change delivered. Reference the task goal.]
+</what_changed>
+
+<main_changes>
+  - `path/to/file` — [Nature of change]
+</main_changes>
+
+---
+
+## 2. Why
+
+<why>
+  [Business/technical rationale. One paragraph. Link to task.md for full context.]
+</why>
+
+---
+
+## 3. What Proves It
+
+<evidence>
+
+| AC | Verifier | Result |
+|---|---|---|
+| AC-1 | `[command]` | PASS |
+| AC-2 | `[command]` | PASS |
+| AC-3 | `[command]` | PASS |
+
+<!-- To reproduce: -->
+```bash
+[Verification commands in order]
+```
+
+</evidence>
+
+---
+
+## 4. What Remains Risky
+
+<residual_risk>
+  [Any risk accepted at Gate 3 that the next owner should be aware of.]
+  - [Risk item — mitigation or monitoring recommendation]
+</residual_risk>
+
+---
+
+## 5. Decisions & Assumptions
+
+<decisions_and_assumptions>
+  <!-- Only list decisions that affect future maintainers. Full record in decision.md. -->
+  - [Decision summary — why this approach was chosen over alternatives]
+</decisions_and_assumptions>
+
+---
+
+## 6. Next Action
+
+<next_action>
+  [What the next person or phase should do, if applicable. Otherwise: NONE.]
+</next_action>
+
+</handoff>

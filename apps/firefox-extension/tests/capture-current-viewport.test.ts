@@ -76,9 +76,34 @@ describe("captureViewportFromEnvironment", () => {
 
     expect(result).toMatchObject({ ok: false, error: { code: "CONTEXT_STALE" } });
   });
+
+  it("prioritizes selected text in anchor.textQuote and visibleText when user highlights text", async () => {
+    const heading = fakeElement({ tagName: "H2", text: "Creating a Promise", top: 20 });
+    const paragraph = fakeElement({ text: "A JavaScript Promise object contains both the producing code and calls to the consuming code.", top: 70 });
+
+    const result = await captureViewportFromEnvironment(
+      { tabId: 1, expectedUrl: "https://example.com/guide" },
+      fakeEnvironment(
+        [heading, paragraph],
+        "https://example.com/guide",
+        "both the producing code and calls",
+      ),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.data.anchor.textQuote).toBe("both the producing code and calls");
+    expect(result.data.visibleText).toContain("[Đoạn được bôi đen]\nboth the producing code and calls");
+    expect(result.data.visibleText).toContain("[Toàn bộ viewport]");
+  });
 });
 
-function fakeEnvironment(elements: HTMLElement[], locationHref = "https://example.com/guide") {
+function fakeEnvironment(
+  elements: HTMLElement[],
+  locationHref = "https://example.com/guide",
+  selectedText = "",
+) {
   const documentLike = {
     title: "Example guide",
     querySelectorAll: () => elements,
@@ -99,6 +124,10 @@ function fakeEnvironment(elements: HTMLElement[], locationHref = "https://exampl
         opacity: "1",
       }) as CSSStyleDeclaration,
     crypto,
+    getSelection: () =>
+      selectedText
+        ? ({ toString: () => selectedText } as unknown as Selection)
+        : null,
   };
 }
 

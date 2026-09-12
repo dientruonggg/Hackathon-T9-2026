@@ -1,0 +1,213 @@
+# Task: [TASK-ID] [Task Title]
+
+<task_spec version="3.0" framework="RIPER-5">
+
+<!-- ════════════════════════════════════════════
+     SECTION 0 — TASK CONTROL (master state record)
+     ════════════════════════════════════════════ -->
+<task_control>
+  <status>BACKLOG</status>  <!-- BACKLOG | ACTIVE | BLOCKED | PAUSED | REVIEW | COMPLETED | CANCELLED -->
+  <spec_level>S1</spec_level>  <!-- S0=sketch | S1=defined | S2=verified | S3=locked -->
+  <priority>P2</priority>  <!-- P0=urgent | P1=high | P2=normal | P3=low -->
+  <risk>MEDIUM</risk>  <!-- LOW | MEDIUM | HIGH -->
+  <estimated_story_points>2</estimated_story_points>  <!-- 1 SP ≈ 2-4 focused engineering hours -->
+  <working_mode>PAIR</working_mode>  <!-- PAIR (default: halts at each gate for review) | DELEGATED (fast-track: continuous autonomous run) | MANUAL | DIAGNOSE-ONLY -->
+  <current_phase>RESEARCH</current_phase>  <!-- RESEARCH | INNOVATE | PLAN | EXECUTE | REVIEW -->
+  <owner>@engineer</owner>
+  <decision_owner>@engineer</decision_owner>
+  <created></created>
+  <last_updated></last_updated>
+</task_control>
+
+---
+
+## 1. Specification (Pillar 1: Task / Spec)
+
+<specification>
+  <goal>
+    [Target outcome, business value, or functional capability.]
+  </goal>
+
+  <current_behavior>
+    [Current behavior prior to this change.]
+  </current_behavior>
+
+  <expected_behavior>
+    [Expected behavior once the change is complete.]
+  </expected_behavior>
+
+  <actor_authorization>
+    [Who initiates this action, under what authorization context.]
+  </actor_authorization>
+
+  <invariants>
+    - [Invariant 1 — Conditions that must remain true throughout and after this change.]
+  </invariants>
+
+  <out_of_scope>
+    - [Explicitly excluded components, refactoring, or undeclared API/schema changes.]
+  </out_of_scope>
+
+  <acceptance_criteria>
+    - [ ] AC-1: [Verifiable functional behavior with explicit input and expected output]
+    - [ ] AC-2: [Edge cases, validation rules, or error handling]
+    - [ ] AC-3: [Automated tests added/updated and passing]
+  </acceptance_criteria>
+
+  <!-- Definition-of-Ready (DoR) Gate — Frontload the thinking before dispatch -->
+  <definition_of_ready>
+    - [ ] Target outcome and acceptance criteria are verifiable without guessing.
+    - [ ] Invariants and <out_of_scope> boundaries are explicit.
+    - [ ] Open questions resolved or scheduled in decision.md (No speculative coding).
+    <!-- STOP: If any DoR item is unchecked, halt and ask clarifying questions first! -->
+  </definition_of_ready>
+</specification>
+
+---
+
+## 2. Context Boundaries (Pillar 2: Context)
+
+<context_boundaries>
+  <target_files>
+    - `src/[path/to/file]` — [Planned modification]
+    - `tests/[path/to/test_file]` — [Target assertions and test fixtures]
+  </target_files>
+
+  <context_groups>
+    <!-- References to registered context groups from process/context/all-context.md -->
+    - [planning | tests | protocols | domain-specific-group]
+  </context_groups>
+
+  <source_of_truth>
+    <requirement>[Link to requirement or spec]</requirement>
+    <architecture>[Link to architecture doc or ADR]</architecture>
+    <existing_behavior>[Test file or code path that proves current behavior]</existing_behavior>
+    <tests>[Primary test suite path]</tests>
+  </source_of_truth>
+</context_boundaries>
+
+---
+
+## 3. Verification Strategy
+
+<!-- Evidence required to close each AC before marking COMPLETED -->
+<verification_strategy>
+
+| AC / Risk | Evidence required | Verifier |
+|---|---|---|
+| AC-1 | | |
+| AC-2 | | |
+| AC-3 | | |
+
+</verification_strategy>
+
+---
+
+## 4. Decisions
+
+<decisions>
+  <approved_decisions>
+    <!-- Decisions that are final and must not be re-opened by the agent -->
+    <!-- | ID | Decision | Rationale | Owner | -->
+  </approved_decisions>
+
+  <open_decisions>
+    <!-- Decisions that still need a human to choose; agent must HALT on these -->
+    <!-- | ID | Question | Why it matters | Owner | Blocking? | -->
+  </open_decisions>
+</decisions>
+
+---
+
+## 5. RIPER-5 Execution Plan (Pillar 4: Loop)
+
+<execution_plan>
+  <phase name="Research" order="1">
+    <!-- READ-ONLY. No source modifications. No implementation decisions. -->
+    - [ ] Ingest task spec, domain invariants, and out-of-scope boundaries.
+    - [ ] Read corresponding tests and port interfaces.
+    - [ ] Establish execution flow, boundaries, and source-of-truth conflicts.
+    - [ ] Produce/update `research.md` artifact.
+    <gate id="G0" label="Research Complete">
+      - [ ] Current behavior understood and documented.
+      - [ ] Execution flow traced.
+      - [ ] No unresolved research blocker.
+      <!-- In DELEGATED / Fast-Track mode: Agent auto-certifies and advances to Innovate immediately -->
+    </gate>
+  </phase>
+
+  <phase name="Innovate" order="2">
+    <!-- READ-ONLY. Present 2-3 viable options. PAIR: engineer selects. DELEGATED: agent auto-selects optimal option. -->
+    - [ ] Generate 2–3 alternative approaches with trade-off matrix.
+    - [ ] Produce `decision.md` artifact.
+    <gate id="G1" label="Gate 1 — Decision Approved">
+      - [ ] Options reviewed and trade-offs analyzed.
+      - [ ] Selected option recorded in `decision.md`.
+      - [ ] No blocking business/schema/security decision remains open.
+      <approved_by></approved_by>  <!-- Engineer name (PAIR) or [AUTO: DELEGATED] (DELEGATED/Fast-Track) -->
+      <approved_date></approved_date>
+    </gate>
+  </phase>
+
+  <phase name="Plan" order="3">
+    <!-- Plan artifacts only. No source-code changes. -->
+    - [ ] Decompose into vertical slices with verifiers and rollback points.
+    - [ ] Populate `plan.md` with scope contract and verification matrix.
+    <gate id="G2" label="Gate 2 — Plan Approved">
+      - [ ] Every slice has a verifier.
+      - [ ] Allowed/forbidden file scope is defined.
+      - [ ] Rollback point defined per slice.
+      - [ ] Stop conditions defined.
+      - [ ] Plan approved.
+      <approved_by></approved_by>  <!-- Engineer name (PAIR) or [AUTO: DELEGATED] (DELEGATED/Fast-Track) -->
+      <approved_date></approved_date>
+    </gate>
+  </phase>
+
+  <phase name="Execute" order="4">
+    <!-- Read/write only within approved scope. One slice at a time. -->
+    - [ ] Implement each slice atomically.
+    - [ ] Run verifier after each slice.
+    - [ ] Inspect diff after each slice.
+    - [ ] Update `state.md` after each slice.
+    - [ ] (Optional) Record quantitative metric deltas in `results.tsv` if tracking benchmarks/performance.
+  </phase>
+
+  <phase name="Review" order="5">
+    <!-- READ-ONLY. May run verification commands. No code fixes during review. -->
+    - [ ] Review full diff, behavior, architecture, data, security, regression.
+    - [ ] Produce `review.md` with findings and verification matrix.
+    <gate id="G3" label="Gate 3 — Review Passed">
+      - [ ] All AC verified with evidence.
+      - [ ] Residual risk accepted.
+      - [ ] Review decision: PASS.
+      - [ ] Ready for handoff.
+      <approved_by></approved_by>  <!-- Engineer name (PAIR) or [AUTO: DELEGATED] (DELEGATED/Fast-Track) -->
+      <approved_date></approved_date>
+    </gate>
+  </phase>
+</execution_plan>
+
+---
+
+## 6. Guardrails & Escalation (Pillar 3 & 4: Harness)
+
+<guardrails>
+  <stop_conditions>
+    <!-- Agent must HALT and request human guidance on any of these -->
+    - Missing business or policy decision.
+    - Public API / DB schema change not declared in this spec.
+    - New external dependency not declared in this spec.
+    - Security policy change required.
+    - Scope expansion beyond `<out_of_scope>`.
+    - Retry budget exhausted on a recurring failure.
+  </stop_conditions>
+
+  <retry_budget max_attempts="3">
+    Maximum 3 consecutive attempts per distinct failure symptom before halting.
+    Never suppress errors with flags (e.g. `# type: ignore`, `eslint-disable`).
+    If exhausted, log into `<open_decisions>` and halt.
+  </retry_budget>
+</guardrails>
+
+</task_spec>

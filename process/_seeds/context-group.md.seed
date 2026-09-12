@@ -1,0 +1,154 @@
+# Research: [TASK-ID]
+
+<research_context task_id="[TASK-ID]" version="2.0" framework="RIPER-5">
+
+<!-- READ-ONLY PHASE. No source modifications. No implementation decisions. -->
+<research_status>
+  <phase>RESEARCH</phase>
+  <mode>READ-ONLY</mode>
+  <research_owner></research_owner>
+  <last_updated></last_updated>
+</research_status>
+
+---
+
+## 1. Current Behavior
+
+<current_behavior>
+  [Observable system behavior prior to this change, based on evidence.]
+</current_behavior>
+
+---
+
+## 2. Execution Flow
+
+<execution_flow>
+
+```text
+Entry
+→ ...
+→ ...
+→ Side effect / output
+```
+
+</execution_flow>
+
+---
+
+## 3. Relevant Components
+
+<components>
+
+| File / Symbol | Role | Evidence | Confidence |
+|---|---|---|---|
+| | | | |
+
+</components>
+
+---
+
+## 4. Dependencies & Boundaries
+
+<boundaries>
+  <callers>[Who invokes the target code]</callers>
+  <callees>[What the target code invokes]</callees>
+  <persistence>[Database tables, cache keys, queues]</persistence>
+  <external_systems>[Third-party APIs, message brokers]</external_systems>
+  <transaction_boundary>[Where transactions begin and end]</transaction_boundary>
+  <security_boundary>[Auth context, permission checks, trust boundary]</security_boundary>
+</boundaries>
+
+---
+
+## 5. Existing Tests
+
+<existing_tests>
+
+| Test | Behavior covered | Gap |
+|---|---|---|
+| | | |
+
+</existing_tests>
+
+---
+
+## 6. Runtime / Configuration
+
+<runtime_config>
+  [Environment variables, feature flags, configuration files relevant to this change.]
+</runtime_config>
+
+---
+
+## 7. Source-of-Truth Analysis
+
+<source_of_truth_analysis>
+
+| Source | Says | Authority | Conflict |
+|---|---|---|---|
+| | | | |
+
+</source_of_truth_analysis>
+
+---
+
+## 8. Evidence Classification
+
+<!-- NEVER mix facts, observations, and hypotheses in a single list -->
+<evidence>
+  <confirmed>
+    <!-- Directly verified from code, tests, or authoritative docs -->
+    -
+  </confirmed>
+
+  <observed>
+    <!-- Inferred from behavior, logs, or indirect reading — not directly proven -->
+    -
+  </observed>
+
+  <hypothesized>
+    <!-- Assumptions that still need verification before acting -->
+    -
+  </hypothesized>
+</evidence>
+
+---
+
+## 9. Assumptions & Uncertainty
+
+<assumptions>
+  [List any assumptions that drive the research conclusions. Flag each as LOW / MEDIUM / HIGH uncertainty.]
+</assumptions>
+
+---
+
+## 10. Impacted Files
+
+<impacted_files>
+  - `path/to/file` — [Reason for impact]
+</impacted_files>
+
+---
+
+## 11. Open Decisions
+
+<open_decisions>
+  <!-- Unresolved questions that must flow into the Innovate phase decision.md -->
+  -
+</open_decisions>
+
+---
+
+## 12. Research Exit Criteria
+
+<research_exit_criteria>
+  - [ ] Current behavior understood and documented.
+  - [ ] Execution flow traced end-to-end.
+  - [ ] Relevant boundaries identified (callers, callees, persistence, security).
+  - [ ] Source-of-truth conflicts identified or confirmed absent.
+  - [ ] Impacted files identified.
+  - [ ] Evidence classified (Confirmed / Observed / Hypothesized).
+  - [ ] No unresolved research blocker.
+</research_exit_criteria>
+
+</research_context>

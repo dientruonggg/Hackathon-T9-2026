@@ -144,8 +144,12 @@ function canonicalize(value: string): string | undefined {
   try {
     const url = new URL(value);
     url.hash = "";
-    for (const key of [...url.searchParams.keys()]) {
-      if (/^(utm_|fbclid$|gclid$|ref$|source$)/i.test(key)) url.searchParams.delete(key);
+    const keysToRemove: string[] = [];
+    url.searchParams.forEach((_, key) => {
+      if (/^(utm_|fbclid$|gclid$|ref$|source$)/i.test(key)) keysToRemove.push(key);
+    });
+    for (const key of keysToRemove) {
+      url.searchParams.delete(key);
     }
     return url.toString();
   } catch {

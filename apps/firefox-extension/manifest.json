@@ -3,7 +3,7 @@
   "name": "Viewport Learning Companion",
   "version": "0.1.0",
   "description": "A user-activated learning companion for the current HTML viewport.",
-  "permissions": ["activeTab", "tabs", "storage", "http://127.0.0.1:8787/*"],
+  "permissions": ["activeTab", "tabs", "storage", "<all_urls>", "http://127.0.0.1:8787/*"],
   "background": {
     "scripts": ["src/background/index.ts"],
     "persistent": false

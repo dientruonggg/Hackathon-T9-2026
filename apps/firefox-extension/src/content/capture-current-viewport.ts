@@ -49,6 +49,7 @@ type CaptureEnvironment = {
   scrollY: number;
   getComputedStyle(element: Element): CSSStyleDeclaration;
   crypto: Crypto;
+  getSelection?(): Selection | null;
 };
 
 type CaptureInput = CaptureViewportInput;
@@ -69,6 +70,7 @@ export async function captureCurrentViewport(input: unknown): Promise<Result<Vie
     scrollY: window.scrollY,
     getComputedStyle: window.getComputedStyle.bind(window),
     crypto,
+    getSelection: () => (typeof window !== "undefined" && typeof window.getSelection === "function" ? window.getSelection() : null),
   });
 }
 
@@ -142,7 +144,18 @@ export async function captureViewportFromEnvironment(
   }
 
   const safeUrl = toSafeUrl(currentUrl);
-  const textQuote = visibleText.slice(0, limits.maxAnchorQuoteChars);
+
+  const rawSelection = environment.getSelection ? environment.getSelection()?.toString() : "";
+  const selectedText = normalizeWhitespace(rawSelection ?? "").slice(0, 1000);
+
+  const textQuote = selectedText
+    ? selectedText.slice(0, limits.maxAnchorQuoteChars)
+    : visibleText.slice(0, limits.maxAnchorQuoteChars);
+
+  const finalVisibleText = selectedText
+    ? `[Đoạn được bôi đen]\n${selectedText}\n\n[Toàn bộ viewport]\n${visibleText}`.slice(0, limits.maxTextChars).trim()
+    : visibleText;
+
   const scrollRatio = calculateScrollRatio(environment);
   const fingerprint = await hashFingerprint(
     `${currentCanonicalUrl}\n${heading}\n${textQuote}`,
@@ -160,7 +173,7 @@ export async function captureViewportFromEnvironment(
         title: normalizeWhitespace(environment.document.title) || heading,
       },
       anchor: { heading, textQuote, scrollRatio, fingerprint },
-      visibleText,
+      visibleText: finalVisibleText,
       visibleCodeBlocks: codeBlocks,
       capturedAt: new Date().toISOString(),
     },
@@ -269,10 +282,14 @@ function parseHttpUrl(value: string): URL | undefined {
 function toCanonicalUrl(url: URL): string {
   const canonical = new URL(url.toString());
   canonical.hash = "";
-  for (const key of [...canonical.searchParams.keys()]) {
+  const keysToRemove: string[] = [];
+  canonical.searchParams.forEach((_, key) => {
     if (/^(utm_|fbclid$|gclid$|ref$|source$)/i.test(key)) {
-      canonical.searchParams.delete(key);
+      keysToRemove.push(key);
     }
+  });
+  for (const key of keysToRemove) {
+    canonical.searchParams.delete(key);
   }
   return canonical.toString();
 }

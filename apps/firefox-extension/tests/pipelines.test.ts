@@ -16,6 +16,7 @@ import {
 import {
   type ConfirmedMemoryCommandInput,
   executeConfirmedMemoryCommand,
+  executeConfirmedMemoryWithRecapture,
 } from "../src/pipeline/confirmed-memory-command";
 import { runOpenSidebarPipeline } from "../src/pipeline/open-sidebar-pipeline";
 
@@ -221,6 +222,63 @@ describe("executeConfirmedMemoryCommand", () => {
         userConfirmed: true,
       }),
     );
+  });
+
+  it("recaptures latest viewport on scroll before saving marker", async () => {
+    const initialContext = makeContext(NOW, "ctx-initial");
+    initialContext.anchor.heading = "Top of page";
+    initialContext.anchor.scrollRatio = 0.05;
+
+    const scrolledContext = makeContext(NOW, "ctx-scrolled");
+    scrolledContext.anchor.heading = "Deep Section";
+    scrolledContext.anchor.scrollRatio = 0.85;
+
+    const capture = vi.fn(async () => ({ ok: true as const, data: scrolledContext }));
+    const saveMarker = vi.fn(async (input: any) => ({
+      ok: true as const,
+      data: { ...makeMarker(scrolledContext), anchor: input.anchor },
+    }));
+
+    const session = makeSession(initialContext);
+    const result = await executeConfirmedMemoryWithRecapture(
+      { status: "UNDERSTOOD", session, userConfirmed: true },
+      { capture, memoryRepository: fakeRepository({ saveMarker }), clock },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(capture).toHaveBeenCalledWith({
+      tabId: session.tabId,
+      expectedUrl: initialContext.source.canonicalUrl,
+    });
+    expect(saveMarker).toHaveBeenCalledWith(
+      expect.objectContaining({
+        anchor: expect.objectContaining({
+          heading: "Deep Section",
+          scrollRatio: 0.85,
+        }),
+      }),
+    );
+    expect(session.context?.anchor.heading).toBe("Deep Section");
+  });
+
+  it("aborts save and returns error if recapture fails", async () => {
+    const initialContext = makeContext();
+    const capture = vi.fn(async () => ({
+      ok: false as const,
+      error: { code: "CONTEXT_STALE" as const, message: "Tab đã chuyển trang.", retryable: true },
+    }));
+    const saveMarker = vi.fn();
+
+    const session = makeSession(initialContext);
+    const result = await executeConfirmedMemoryWithRecapture(
+      { status: "UNDERSTOOD", session, userConfirmed: true },
+      { capture, memoryRepository: fakeRepository({ saveMarker }), clock },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe("CONTEXT_STALE");
+    expect(saveMarker).not.toHaveBeenCalled();
   });
 });
 

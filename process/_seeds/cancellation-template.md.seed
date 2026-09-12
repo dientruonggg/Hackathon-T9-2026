@@ -1,0 +1,79 @@
+# Cancellation Record: [TASK-ID] [Task Title]
+
+<cancellation_record task_id="[TASK-ID]" version="1.0" framework="RIPER-5">
+
+<!--
+  TASK CANCELLATION GUIDELINES:
+  - Purpose: Preserve investigation knowledge, technical discoveries, and decision rationale when a task is aborted.
+  - Never delete a task workspace outright if research or partial planning has occurred.
+  - Instantiate this file as `cancelled.md` inside the task workspace.
+  - Complete the reversal checklist, then move the task directory to `completed/` (or `cancelled/`).
+-->
+
+<status>
+  <phase_at_cancellation>[RESEARCH | INNOVATE | PLAN | EXECUTE | REVIEW]</phase_at_cancellation>
+  <cancelled_date>[YYYY-MM-DD or DD-MM-YY]</cancelled_date>
+  <cancelled_by>[@engineer_or_product_lead]</cancelled_by>
+  <reversal_status>[CLEAN | ROLLBACK_APPLIED | DIRTY_NEEDS_MANUAL_CLEANUP]</reversal_status>
+</status>
+
+---
+
+## 1. Rationale for Cancellation
+
+<cancellation_rationale>
+  <primary_reason>
+    <!-- [e.g. Pivot in product strategy / Architectural blocker / Excessive blast radius / Superseded by CHG-YYY] -->
+    [Concise summary of why this task was terminated prematurely.]
+  </primary_reason>
+
+  <decision_context>
+    [Detailed context, trade-offs evaluated, and key stakeholder guidance that led to cancellation.]
+  </decision_context>
+</cancellation_rationale>
+
+---
+
+## 2. Technical Findings & Preserved Knowledge
+
+<preserved_knowledge>
+  <codebase_discoveries>
+    <!-- What did we learn about the system, data models, or hidden dependencies during this task? -->
+    - [Discovery 1 — Component behavior, undocumented API limits, or legacy constraints]
+    - [Discovery 2 — Existing tests or subsystem boundaries uncovered]
+  </codebase_discoveries>
+
+  <invalidated_hypotheses>
+    <!-- What assumptions proved false during investigation? -->
+    - [Hypothesis that turned out incorrect or infeasible]
+  </invalidated_hypotheses>
+
+  <reusable_assets>
+    <!-- Are there test cases, draft schemas, benchmarks, or prototypes that future tasks can reuse? -->
+    - [Reusable asset 1: test cases or data models in draft branch / commit]
+  </reusable_assets>
+</preserved_knowledge>
+
+---
+
+## 3. Working Tree Reversal & Cleanup Checklist
+
+<cleanup_checklist>
+  - [ ] Uncommitted changes rolled back or stashed cleanly (`git status` clean)
+  - [ ] Temporary debug logs, scratch scripts, or test dumps deleted
+  - [ ] No phantom migrations or schema artifacts left in local database
+  - [ ] Task folder archived to `completed/` (or `cancelled/`)
+</cleanup_checklist>
+
+---
+
+## 4. Superseding Task or Follow-Up
+
+<follow_up>
+  <superseded_by>[Link to new task folder or CHG-YYY, or NONE]</superseded_by>
+  <recommended_next_action>
+    [Specific recommendations if this problem is revisited in the future.]
+  </recommended_next_action>
+</follow_up>
+
+</cancellation_record>

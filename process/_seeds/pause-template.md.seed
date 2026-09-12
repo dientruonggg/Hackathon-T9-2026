@@ -1,0 +1,106 @@
+# Pause Record: [TASK-ID] [Task Title]
+
+<pause_record task_id="[TASK-ID]" version="1.0" framework="RIPER-5">
+
+<!--
+  TASK PAUSE & PARKING GUIDELINES:
+  - Purpose: Freeze in-flight tasks cleanly when blocked by external dependencies, shifting priorities, or waiting on human feedback.
+  - Never abandon an active task without recording the exact working tree state and resumption conditions.
+  - Instantiate this file as `paused.md` inside the task workspace.
+  - If the pause is long-term (> 2 weeks), move the task directory from `active/` to `backlog/` (or `paused/`) to keep `active/` clean.
+-->
+
+<status>
+  <phase_at_pause>[RESEARCH | INNOVATE | PLAN | EXECUTE | REVIEW]</phase_at_pause>
+  <paused_date>[YYYY-MM-DD or DD-MM-YY]</paused_date>
+  <paused_by>[@engineer_or_tech_lead]</paused_by>
+  <git_branch>[feature/CHG-XXX-description]</git_branch>
+  <git_state>[COMMITTED_WIP | STASHED | CLEAN]</git_state>
+  <git_commit_or_stash_ref>[e.g. git commit hash: a1b2c3d or stash@{0}]</git_commit_or_stash_ref>
+</status>
+
+---
+
+## 1. Reason for Pause & Blockers
+
+<pause_context>
+  <primary_reason>
+    <!-- [e.g. Blocked on upstream API Task CHG-042 / Awaiting security review / Priority preemption by P0 hotfix / Waiting on customer feedback] -->
+    [Concise description of why this task was paused.]
+  </primary_reason>
+
+  <blocker_details>
+    [Detailed context on blocking conditions, external tickets, or dependencies.]
+  </blocker_details>
+</pause_context>
+
+---
+
+## 2. In-Flight Progress & Slice Snapshot
+
+<progress_snapshot>
+  <completed_slices>
+    <!-- Which slices from plan.md have already passed their verifiers? -->
+    - [Slice 1: Objective — VERIFIED & COMMITTED]
+  </completed_slices>
+
+  <active_slice_at_pause>
+    <!-- What was being worked on when paused? -->
+    <slice_id>[e.g. Slice 2]</slice_id>
+    <state_summary>[e.g. Service logic implemented, 2 unit tests written but failing due to mock issue]</state_summary>
+  </active_slice_at_pause>
+
+  <touched_files>
+    <!-- List of files modified or created during active work -->
+    - `src/...`
+    - `tests/...`
+  </touched_files>
+</progress_snapshot>
+
+---
+
+## 3. Resumption Criteria
+
+<resumption_criteria>
+  <!-- What explicit event, ticket resolution, or condition unlocks this task? -->
+  <trigger_condition>
+    [e.g. CHG-042 merged to main and published to staging environment]
+  </trigger_condition>
+
+  <responsible_owner>[@engineer_to_notify]</responsible_owner>
+</resumption_criteria>
+
+---
+
+## 4. Stale-Risk Assessment (Bit-Rot Warnings)
+
+<stale_risk_assessment>
+  <!-- What might decay or drift if this task remains parked for weeks/months? -->
+  <schema_drift_risk level="[LOW|MEDIUM|HIGH]">
+    [Potential DB migration or API contract changes occurring in parallel.]
+  </schema_drift_risk>
+
+  <dependency_drift_risk level="[LOW|MEDIUM|HIGH]">
+    [Libraries or internal shared modules that may be upgraded in the interim.]
+  </dependency_drift_risk>
+
+  <architecture_drift_risk level="[LOW|MEDIUM|HIGH]">
+    [Refactorings or new conventions that might invalidate assumptions in research.md.]
+  </architecture_drift_risk>
+</stale_risk_assessment>
+
+---
+
+## 5. Resumption Pre-Flight Checklist
+
+<resumption_checklist>
+  <!-- MUST execute in order before restarting EXECUTE loop -->
+  - [ ] 1. Move task folder back to `active/` (if it was parked in `backlog/`).
+  - [ ] 2. Checkout feature branch and rebase/merge latest `main` (`git checkout <branch> && git pull --rebase origin main`).
+  - [ ] 3. Run validation commands on baseline (`npm run test && npm run lint`) to ensure codebase is green.
+  - [ ] 4. Perform Context Freshness Check: Re-read `task.md`, `state.md`, and verify if assumptions in `research.md` still hold.
+  - [ ] 5. If `<allowed_files>` were altered on `main`, update `plan.md` scope contract before executing code.
+  - [ ] 6. Delete or archive `paused.md` and resume the current slice in `state.md`.
+</resumption_checklist>
+
+</pause_record>

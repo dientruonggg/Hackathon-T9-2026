@@ -1,8 +1,10 @@
 import type {
+  CaptureViewportInput,
   MemoryMarker,
   MemoryStatus,
   Result,
   ShortSession,
+  ViewportContext,
 } from "@vlc/contracts";
 import type { Clock, MemoryRepository } from "@vlc/memory";
 
@@ -14,6 +16,12 @@ export interface ConfirmedMemoryCommandInput {
 }
 
 export interface ConfirmedMemoryCommandDependencies {
+  memoryRepository: MemoryRepository;
+  clock: Clock;
+}
+
+export interface ConfirmedMemoryWithRecaptureDependencies {
+  capture(input: CaptureViewportInput): Promise<Result<ViewportContext>>;
   memoryRepository: MemoryRepository;
   clock: Clock;
 }
@@ -54,6 +62,31 @@ export async function executeConfirmedMemoryCommand(
   } as const;
 
   return deps.memoryRepository.saveMarker(markerInput);
+}
+
+export async function executeConfirmedMemoryWithRecapture(
+  input: ConfirmedMemoryCommandInput,
+  deps: ConfirmedMemoryWithRecaptureDependencies,
+): Promise<Result<MemoryMarker>> {
+  if (input.userConfirmed !== true) {
+    return failure("Chỉ lưu dấu mốc sau khi người dùng xác nhận.");
+  }
+  if (!input.session.context) {
+    return failure("Không có viewport context để lưu dấu mốc.");
+  }
+
+  const refreshed = await deps.capture({
+    tabId: input.session.tabId,
+    expectedUrl: input.session.context.source.canonicalUrl,
+  });
+  if (!refreshed.ok) return refreshed;
+
+  input.session.context = refreshed.data;
+
+  return executeConfirmedMemoryCommand(input, {
+    memoryRepository: deps.memoryRepository,
+    clock: deps.clock,
+  });
 }
 
 function failure(message: string): Result<never> {

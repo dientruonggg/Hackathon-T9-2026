@@ -1,0 +1,144 @@
+# Decision: [DEC-ID] [Task ID]
+
+<technical_decision task_id="[TASK-ID]" dec_id="[DEC-ID]" version="1.0" framework="RIPER-5">
+
+<!-- READ-ONLY PHASE. Present options. PAIR: engineer decides. DELEGATED: agent auto-selects optimal recommendation and advances. -->
+<decision_status>
+  <phase>INNOVATE</phase>
+  <mode>READ-ONLY</mode>
+  <decision_owner></decision_owner>
+  <last_updated></last_updated>
+</decision_status>
+
+---
+
+## 1. Context
+
+<context>
+  <task>[Link to task.md or task ID]</task>
+  <research_artifact>[Link to research.md]</research_artifact>
+  <constraints>
+    [Key constraints from research that narrow the solution space.]
+  </constraints>
+</context>
+
+---
+
+## 2. Decision Required
+
+<decision_question>
+  [Precise statement of what must be decided. One question per decision artifact.]
+</decision_question>
+
+---
+
+## 3. Options
+
+<options>
+
+  <option id="A">
+    <approach>[High-level implementation approach]</approach>
+    <advantages>-</advantages>
+    <disadvantages>-</disadvantages>
+    <complexity>LOW | MEDIUM | HIGH</complexity>
+    <compatibility>[Backward compatibility impact]</compatibility>
+    <concurrency_transaction_risk>[Race conditions, lock contention, rollback complexity]</concurrency_transaction_risk>
+    <testability>[How easy to verify this option]</testability>
+    <maintainability>[Long-term maintenance burden]</maintainability>
+  </option>
+
+  <option id="B">
+    <approach>[High-level implementation approach]</approach>
+    <advantages>-</advantages>
+    <disadvantages>-</disadvantages>
+    <complexity>LOW | MEDIUM | HIGH</complexity>
+    <compatibility>[Backward compatibility impact]</compatibility>
+    <concurrency_transaction_risk>[Race conditions, lock contention, rollback complexity]</concurrency_transaction_risk>
+    <testability>[How easy to verify this option]</testability>
+    <maintainability>[Long-term maintenance burden]</maintainability>
+  </option>
+
+  <option id="C">
+    <approach>[High-level implementation approach]</approach>
+    <advantages>-</advantages>
+    <disadvantages>-</disadvantages>
+    <complexity>LOW | MEDIUM | HIGH</complexity>
+    <compatibility>[Backward compatibility impact]</compatibility>
+    <concurrency_transaction_risk>[Race conditions, lock contention, rollback complexity]</concurrency_transaction_risk>
+    <testability>[How easy to verify this option]</testability>
+    <maintainability>[Long-term maintenance burden]</maintainability>
+  </option>
+
+</options>
+
+---
+
+## 4. Trade-off Matrix
+
+<tradeoff_matrix>
+
+| Criterion | A | B | C |
+|---|:---:|:---:|:---:|
+| Compatibility | | | |
+| Complexity | | | |
+| Risk | | | |
+| Testability | | | |
+| Maintainability | | | |
+
+<!-- Score: 1 (poor) → 5 (excellent) -->
+</tradeoff_matrix>
+
+---
+
+## 5. Recommendation
+
+<recommendation>
+  [Agent's recommended option with rationale. This is a proposal — engineer decides.]
+</recommendation>
+
+---
+
+## 6. Implementation Decision
+
+<!-- PAIR mode: Completed by engineer before Gate 1 passes.
+     DELEGATED / Fast-Track mode: Agent automatically populates Recommendation
+     into <selected_option>, documents rationale, signs Gate 1 with [AUTO: DELEGATED], and proceeds. -->
+<engineer_decision>
+  <selected_option></selected_option>
+  <rationale></rationale>
+  <rejected_alternatives>
+    - Option [X]: [Reason rejected]
+  </rejected_alternatives>
+</engineer_decision>
+
+---
+
+## 7. Constraints Created by This Decision
+
+<constraints_created>
+  [List any new constraints on implementation that flow into plan.md]
+  -
+</constraints_created>
+
+---
+
+## 8. Evidence Still Required
+
+<evidence_required>
+  [Any facts not yet confirmed that must be verified during the Plan or Execute phase]
+  -
+</evidence_required>
+
+---
+
+## Gate 1 — Decision Approved
+
+<gate id="G1">
+  - [ ] All options presented and trade-offs analyzed.
+  - [ ] Selected option recorded above.
+  - [ ] No blocking business / schema / security decision remains open.
+  <approved_by></approved_by>  <!-- Engineer name (PAIR) or [AUTO: DELEGATED] (DELEGATED/Fast-Track) -->
+  <approved_date></approved_date>
+</gate>
+
+</technical_decision>

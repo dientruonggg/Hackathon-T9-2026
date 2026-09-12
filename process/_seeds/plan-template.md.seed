@@ -1,0 +1,136 @@
+# Plan: [PLAN-ID] [Task ID]
+
+<execution_plan task_id="[TASK-ID]" plan_id="[PLAN-ID]" version="2.0" framework="RIPER-5">
+
+<!-- PLAN PHASE. Plan artifacts only. No source-code changes. -->
+<plan_status>
+  <phase>PLAN</phase>
+  <last_updated></last_updated>
+</plan_status>
+
+---
+
+## 1. Input Artifacts
+
+<input_artifacts>
+  <task_spec>[Link to task.md]</task_spec>
+  <research>[Link to research.md]</research>
+  <decision>[Link to decision.md — DEC-ID, selected option]</decision>
+</input_artifacts>
+
+---
+
+## 2. Execution Constraints
+
+<!-- These constraints bind the Execute phase. Agent must not exceed them. -->
+<execution_constraints>
+  <allowed_files>
+    - `src/path/...` — [Reason]
+    - `tests/path/...` — [Reason]
+  </allowed_files>
+  <forbidden_files>
+    - `src/public-api/...` — [Not in scope]
+    - `schema/...` — [Schema changes require separate approval]
+  </forbidden_files>
+  <allowed_commands>
+    - `[test runner command]`
+    - `[lint/format command]`
+  </allowed_commands>
+  <restricted_operations>
+    - No DB migrations without explicit engineer approval.
+    - No new third-party dependencies without explicit engineer approval.
+  </restricted_operations>
+  <required_approvals>
+    - [List any mid-execute approvals required, e.g. before touching a shared module]
+  </required_approvals>
+</execution_constraints>
+
+---
+
+## 3. Slice Summary
+
+<slice_summary>
+
+| ID | Behavior | Boundary | Files | AC | Verifier | Risk | Mode | Rollback |
+|---|---|---|---|---|---|---|---|---|
+| S1 | | | | | | | | |
+| S2 | | | | | | | | |
+
+</slice_summary>
+
+---
+
+## 4. Slice Details
+
+<slices>
+
+  <slice id="S1">
+    <objective>[What behavior this slice delivers]</objective>
+    <change>[What specifically will be modified]</change>
+    <allowed_files>
+      - `src/path/file.py`
+    </allowed_files>
+    <acceptance_criteria>
+      - [ ] AC-N: [Criterion this slice satisfies]
+    </acceptance_criteria>
+    <verifier>
+      ```bash
+      # Command(s) that prove this slice is correct
+      ```
+    </verifier>
+    <expected_evidence>[What the verifier output must show]</expected_evidence>
+    <rollback_point>[What to undo if this slice fails — git stash / revert commit / flag]</rollback_point>
+    <stop_conditions>
+      - [Condition that requires halting and requesting human guidance]
+    </stop_conditions>
+  </slice>
+
+  <!-- Duplicate <slice> block for each additional slice -->
+
+</slices>
+
+---
+
+## 5. Scope Contract
+
+<scope_contract>
+  <allowed>
+    - [What the agent is permitted to change]
+  </allowed>
+  <forbidden>
+    - [What the agent must never touch during this plan]
+  </forbidden>
+</scope_contract>
+
+---
+
+## 6. Verification Matrix
+
+<!-- Populated during and after Execute phase -->
+<verification_matrix>
+
+| AC / Risk | Test / Command | Expected Evidence | Strictness (hard-mandatory / soft-mandatory / advisory) | Actual Result |
+|---|---|---|---|---|
+| AC-1 | | | hard-mandatory | |
+| AC-2 | | | hard-mandatory | |
+| AC-3 | | | advisory | |
+
+</verification_matrix>
+
+---
+
+## Gate 2 — Plan Approved
+
+<gate id="G2">
+  - [ ] Every slice has a defined verifier.
+  - [ ] Scope contract (allowed / forbidden) approved.
+  - [ ] Enforcement strictness assigned per AC/verification item.
+  - [ ] Stop conditions defined per slice.
+  - [ ] Rollback point defined per slice.
+  - [ ] Allowed commands listed.
+  - [ ] Plan approved.
+  <approved_by></approved_by>  <!-- Engineer name (PAIR) or [AUTO: DELEGATED] (DELEGATED/Fast-Track) -->
+  <approved_date></approved_date>
+</gate>
+
+</execution_plan>

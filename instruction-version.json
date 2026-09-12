@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "@damphuquy/agent-init",
+  "version": "3.1.0",
+  "framework": "RIPER-5",
+  "frameworkVersion": "3.0.0",
+  "language": "en",
+  "description": "Instruction and governance template manifest for AI coding agents and operational workspace.",
+  "installedAt": "2026-09-12T04:59:09.182Z",
+  "updatedAt": "2026-09-12T04:59:09.182Z",
+  "manifest": {
+    "core": [
+      "AGENTS.md",
+      "instruction-version.json"
+    ],
+    "controlLayer": [
+      ".agents/README.md",
+      ".agents/behavior.md",
+      ".agents/guardrails.md",
+      ".agents/conventions/naming.md"
+    ],
+    "seeds": [
+      "process/_seeds/_GUIDE.md",
+      "process/_seeds/task-template.md.seed",
+      "process/_seeds/task-lite.md.seed",
+      "process/_seeds/context-group.md.seed",
+      "process/_seeds/decision-template.md.seed",
+      "process/_seeds/plan-template.md.seed",
+      "process/_seeds/state-template.md.seed",
+      "process/_seeds/review-template.md.seed",
+      "process/_seeds/handoff-template.md.seed",
+      "process/_seeds/cancellation-template.md.seed",
+      "process/_seeds/pause-template.md.seed",
+      "process/_seeds/results-template.tsv.seed",
+      "process/_seeds/program-template.md.seed"
+    ],
+    "context": [
+      "process/context/all-context.md",
+      "process/context/planning/all-planning.md",
+      "process/context/tests/all-tests.md"
+    ],
+    "protocols": [
+      "process/development-protocols/all-development-protocols.md",
+      "process/development-protocols/orchestration.md",
+      "process/development-protocols/implementation-standards.md"
+    ]
+  },
+  "updateStrategy": {
+    "slashCommand": "/update",
+    "checkCommand": "npm view @damphuquy/agent-init version",
+    "updateCommand": "npx @damphuquy/agent-init update",
+    "forceUpdateCommand": "npx @damphuquy/agent-init@latest . --force",
+    "preserveUserFiles": [
+      "AGENTS.md#validation_commands",
+      "process/features/**",
+      "process/general-plans/**"
+    ],
+    "safeToOverwrite": [
+      ".agents/**",
+      "process/_seeds/**",
+      "process/context/**",
+      "process/development-protocols/**",
+      "instruction-version.json"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DamPhuQuy/agent-instructions"
+  }
+}

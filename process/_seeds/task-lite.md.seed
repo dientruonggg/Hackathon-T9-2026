@@ -1,0 +1,88 @@
+# Task Lite: [TASK-ID] [Task Title]
+
+<task_lite version="3.0" framework="RIPER-5-Lite">
+
+<!-- ════════════════════════════════════════════
+     SECTION 0 — TASK CONTROL
+     ════════════════════════════════════════════ -->
+<task_control>
+  <track>LITE</track>  <!-- LITE: Single-file artifact for fast iteration, bugfixes, micro-tasks -->
+  <status>ACTIVE</status>  <!-- ACTIVE | REVIEW | COMPLETED | CANCELLED -->
+  <priority>P2</priority>  <!-- P0=urgent | P1=high | P2=normal | P3=low -->
+  <working_mode>PAIR</working_mode>  <!-- PAIR (review at gates) | DELEGATED (autonomous run) -->
+  <current_phase>PLAN</current_phase>  <!-- PLAN | EXECUTE | REVIEW -->
+  <owner>@engineer</owner>
+</task_control>
+
+---
+
+## 1. Intent & Specification
+
+<specification>
+  <goal>
+    [Clear description of the fix, enhancement, or micro-feature]
+  </goal>
+
+  <invariants>
+    - [Key constraint that must NOT be broken during this task]
+  </invariants>
+
+  <acceptance_criteria>
+    - [ ] AC-1: [Specific verifiable outcome with expected behavior]
+    - [ ] AC-2: [Automated tests or lint checks passing]
+  </acceptance_criteria>
+
+  <!-- Definition-of-Ready (DoR): Do not begin coding if problem or allowed files are vague -->
+  <definition_of_ready>
+    - [ ] Intent and acceptance criteria are clear without assumptions.
+    - [ ] Allowed files in Section 2 are identified.
+  </definition_of_ready>
+</specification>
+
+---
+
+## 2. Scope Contract & File Whitelist
+
+<scope_contract>
+  <allowed_files>
+    <file>[exact/path/to/file1.ts]</file>
+    <file>[exact/path/to/file1.test.ts]</file>
+  </allowed_files>
+
+  <forbidden_files>
+    <file>[any/file/outside/the/scope]</file>
+  </forbidden_files>
+</scope_contract>
+
+---
+
+## 3. Execution Plan (Compact Slices)
+
+<execution_plan>
+  ### Slice 1: [Core Change Title]
+  - **Action:** [What code or test to write]
+  - **Verifier:** [e.g., npm test path/to/test.ts || pytest path/to/test.py]
+  - **Status:** [ ] PENDING / IN_PROGRESS / DONE
+
+  ### Slice 2 (Optional): [Secondary / Integration Change]
+  - **Action:** [What code or test to write]
+  - **Verifier:** [Command to run]
+  - **Status:** [ ] PENDING / IN_PROGRESS / DONE
+</execution_plan>
+
+---
+
+## 4. Consolidated Verification & Gates
+
+<verification_gates>
+  <!-- Gate G1/G2: Scope & Architecture check (pre-execution) -->
+  - [ ] **Gate G1/G2 (Plan Approved):** Allowed files confirmed, test verifiers defined.
+
+  <!-- Gate G3: Verification evidence (post-execution) -->
+  - [ ] **Gate G3 (Ready for Handoff):**
+    - [ ] Verifier commands executed cleanly (Zero errors).
+    - [ ] Git diff inspected — NO files touched outside `<allowed_files>`.
+    - [ ] No temporary debug logs or unintended changes.
+</verification_gates>
+
+</task_lite>

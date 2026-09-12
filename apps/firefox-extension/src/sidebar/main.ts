@@ -14,7 +14,10 @@ import type {
 } from "@vlc/contracts";
 import { checkSourcePolicy } from "../policy/check-source-policy";
 import { runAskAgentPipeline } from "../pipeline/ask-agent-pipeline";
-import { executeConfirmedMemoryCommand } from "../pipeline/confirmed-memory-command";
+import {
+  executeConfirmedMemoryCommand,
+  executeConfirmedMemoryWithRecapture,
+} from "../pipeline/confirmed-memory-command";
 import { runOpenSidebarPipeline } from "../pipeline/open-sidebar-pipeline";
 import { requestAgentTurn } from "../services/agent-api-client";
 import {
@@ -39,6 +42,9 @@ const askButton = requireElement<HTMLButtonElement>("#ask-button");
 const answerPanel = requireElement<HTMLElement>("#answer-panel");
 const answerContent = requireElement<HTMLElement>("#answer-content");
 const groundingLabel = requireElement<HTMLElement>("#grounding-label");
+const agentProposalPanel = requireElement<HTMLElement>("#agent-proposal-panel");
+const agentProposalText = requireElement<HTMLElement>("#agent-proposal-text");
+const acceptProposalButton = requireElement<HTMLButtonElement>("#accept-proposal-button");
 const markerButtons = Array.from(
   document.querySelectorAll<HTMLButtonElement>("[data-memory-status]"),
 );
@@ -169,6 +175,11 @@ for (const button of markerButtons) {
 
 resumeButton.addEventListener("click", () => void resumeFirstMemory());
 
+acceptProposalButton.addEventListener("click", () => {
+  const suggestedStatus = session?.pendingAction?.payload.status;
+  if (suggestedStatus) void saveMarker(suggestedStatus);
+});
+
 void initializeSidebar();
 
 async function initializeSidebar(): Promise<void> {
@@ -262,14 +273,19 @@ async function saveMarker(status: MemoryStatus): Promise<void> {
     session.pendingAction?.payload.status === status
       ? session.pendingAction.payload.note
       : undefined;
-  const saved = await executeConfirmedMemoryCommand(
+
+  const saved = await executeConfirmedMemoryWithRecapture(
     {
       status,
       session,
       userConfirmed: true,
       ...(suggestedNote === undefined ? {} : { note: suggestedNote }),
     },
-    { memoryRepository, clock: systemClock },
+    {
+      capture: captureTabViewport,
+      memoryRepository,
+      clock: systemClock,
+    },
   );
 
   if (!saved.ok) {
@@ -279,6 +295,9 @@ async function saveMarker(status: MemoryStatus): Promise<void> {
     return;
   }
 
+  contextHeading.textContent = session.context.anchor.heading || session.context.source.title;
+  contextPreview.textContent = session.context.visibleText;
+
   const recalled = await memoryRepository.searchMemory({
     source: session.context.source,
     anchor: session.context.anchor,
@@ -286,6 +305,7 @@ async function saveMarker(status: MemoryStatus): Promise<void> {
   });
   if (recalled.ok) session.relatedMemories = recalled.data;
   delete session.pendingAction;
+  agentProposalPanel.hidden = true;
   session.status = "READY_WITH_MEMORY";
   renderMemory(session);
   void refreshPrivacyMemoryState();
@@ -349,6 +369,16 @@ function renderAnswer(response: AgentTurnResponse): void {
   answerPanel.hidden = false;
   answerContent.textContent = response.answer;
   groundingLabel.textContent = formatGrounding(response.grounding);
+
+  const suggestedAction = response.suggestedActions[0];
+  if (suggestedAction && suggestedAction.type === "CONFIRM_MARKER") {
+    agentProposalPanel.hidden = false;
+    const statusLabel = formatMemoryStatus(suggestedAction.payload.status);
+    const note = suggestedAction.payload.note || suggestedAction.confirmationText;
+    agentProposalText.textContent = `Agent đề xuất: ${statusLabel} — ${note}`;
+  } else {
+    agentProposalPanel.hidden = true;
+  }
 }
 
 function renderFatalError(message: string): void {
@@ -379,6 +409,7 @@ function updateControls(): void {
   questionInput.disabled = busy || !canUseContext;
   askButton.disabled = busy || !canUseContext;
   for (const button of markerButtons) button.disabled = busy || !canUseContext;
+  acceptProposalButton.disabled = busy || !session?.pendingAction;
   resumeButton.disabled = busy || !session || session.relatedMemories.length === 0;
 }
 

@@ -1,0 +1,149 @@
+# State: [TASK-ID]
+
+<loop_state task_id="[TASK-ID]" version="2.0" framework="RIPER-5">
+
+<!-- The persistent memory of the Execute loop. Update after every slice. -->
+<state_header>
+  <current_phase>EXECUTE</current_phase>  <!-- RESEARCH | INNOVATE | PLAN | EXECUTE | REVIEW -->
+  <current_gate>G2</current_gate>  <!-- G0 | G1 | G2 | G3 -->
+  <last_updated></last_updated>
+</state_header>
+
+---
+
+## 1. Task
+
+<task_ref>
+  <task_spec>[Link to task.md]</task_spec>
+  <plan>[Link to plan.md]</plan>
+</task_ref>
+
+---
+
+## 2. Goal & Invariants
+
+<goal_and_invariants>
+  <goal>[One-line restatement of the task goal]</goal>
+  <invariants>
+    - [Invariant 1 — must remain true throughout Execute]
+  </invariants>
+</goal_and_invariants>
+
+---
+
+## 3. Approved Decisions
+
+<approved_decisions>
+  <!-- Never re-open these. Read decision.md for full rationale. -->
+  - [DEC-ID]: [Decision summary — selected option X because Y]
+</approved_decisions>
+
+---
+
+## 4. Completed Slices
+
+<completed_slices>
+  <!-- Update after each slice verifier passes -->
+  | Slice | Status | Verifier Result | Evidence |
+  |---|---|---|---|
+  | S1 | | | |
+</completed_slices>
+
+---
+
+## 5. Current Slice
+
+<current_slice>
+  <id></id>
+  <objective></objective>
+  <status>IN_PROGRESS</status>  <!-- NOT_STARTED | IN_PROGRESS | VERIFYING | DONE | BLOCKED -->
+</current_slice>
+
+---
+
+## 6. Current Diff
+
+<current_diff>
+  <!-- Paste relevant `git diff` summary here after each slice to verify zero noise -->
+  ```diff
+  ```
+</current_diff>
+
+---
+
+## 7. Verification Evidence
+
+<verification_evidence>
+  <!-- Accumulate verifier output for each completed slice -->
+  ```
+  [Verifier command output]
+  ```
+</verification_evidence>
+
+---
+
+## 8. Failure Memory
+
+<!-- CRITICAL: Record every failure. Never retry the same approach twice. -->
+<failure_memory>
+
+  <failure id="F1">
+    <signature>[Unique error signature / symptom description]</signature>
+    <hypothesis>[What was believed to be the cause]</hypothesis>
+    <experiment>[What was tried]</experiment>
+    <result>[What actually happened]</result>
+    <must_not_repeat>[Specific action / assumption to never repeat]</must_not_repeat>
+  </failure>
+
+</failure_memory>
+
+---
+
+## 9. Retry Budget
+
+<retry_budget>
+  <allowed>3</allowed>
+  <used>0</used>
+  <remaining>3</remaining>
+  <!-- If remaining reaches 0: HALT and escalate to open_decisions in task.md -->
+</retry_budget>
+
+---
+
+## 10. Scope Changes
+
+<scope_changes>
+  <!-- Any approved deviations from the original plan.md scope contract -->
+  -
+</scope_changes>
+
+---
+
+## 11. Open Risks / Blockers
+
+<open_risks>
+  -
+</open_risks>
+
+---
+
+## 12. Next Action
+
+<next_action>
+  [Precise description of the very next step the agent must take.]
+</next_action>
+
+---
+
+## 13. Context Freshness Check
+
+<context_freshness>
+  <!-- Complete before continuing after any pause or context reload -->
+  - [ ] Active task spec re-read.
+  - [ ] Relevant source files re-read after last change.
+  - [ ] Plan.md current slice confirmed.
+  - [ ] Failure memory checked — no stale assumption being repeated.
+  - [ ] No unverified hypothesis being treated as confirmed fact.
+</context_freshness>
+
+</loop_state>
