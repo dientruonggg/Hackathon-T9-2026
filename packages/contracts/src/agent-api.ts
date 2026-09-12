@@ -42,6 +42,7 @@ export type PendingUserAction = z.infer<typeof PendingUserActionSchema>;
 
 export const ShortSessionSchema = z.object({
   sessionId: z.string(),
+  tabId: z.number().int().nonnegative(),
   status: SidebarStatusSchema,
   policy: SourcePolicyResultSchema.optional(),
   context: ViewportContextSchema.optional(),
@@ -52,6 +53,7 @@ export const ShortSessionSchema = z.object({
 });
 export interface ShortSession {
   sessionId: string;
+  tabId: number;
   status: SidebarStatus;
   policy?: SourcePolicyResult;
   context?: ViewportContext;
