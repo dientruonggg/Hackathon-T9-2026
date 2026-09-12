@@ -2,7 +2,7 @@
 
 ## Status
 
-READY. Tạo branch từ `BASE_SHA=0ce94d0dfdb5dbfaa1ff870817c3f9156f845133`.
+READY. Remote branch được tạo sẵn: `feat/safe-observability`, base `origin/last-mile-base`.
 
 ## Mission
 

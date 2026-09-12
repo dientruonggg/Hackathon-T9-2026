@@ -2,7 +2,7 @@
 
 ## Status
 
-READY cho phần scripts/docs từ `BASE_SHA=0ce94d0dfdb5dbfaa1ff870817c3f9156f845133`; Golden E2E chỉ được đánh PASS sau khi merge task 04 và 05. Owner: bạn + Codex.
+READY cho phần scripts/docs. Remote branch được tạo sẵn: `feat/demo-release-harness`, base `origin/last-mile-base`. Golden E2E chỉ được đánh PASS sau khi merge task 04 và 05. Owner: bạn + Codex.
 
 ## Mission
 

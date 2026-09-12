@@ -8,13 +8,13 @@ Các task `01`–`03` bên dưới được giữ làm acceptance criteria và l
 
 ## Phase last-mile — ba người làm song song
 
-Tạo cả ba branch từ cùng `BASE_SHA` sau khi tài liệu này được push. Mỗi người chỉ sửa ownership của mình.
+Ba remote branch được chủ dự án tạo sẵn từ cùng một base. Mỗi người chỉ fetch và switch đúng branch của mình; không tự tạo lại từ SHA khác.
 
 ```text
-BASE_SHA: 0ce94d0dfdb5dbfaa1ff870817c3f9156f845133
+BASE_REF: origin/last-mile-base
 ```
 
-Commit này chứa đầy đủ task contract. Mỗi agent phải checkout đúng `BASE_SHA`, tạo branch của mình rồi chạy `git rev-parse HEAD` để xác nhận trước khi code. Commit sau `BASE_SHA` chỉ đóng dấu lại chính SHA này, không đổi task contract.
+Trước khi code, chạy `git fetch origin --prune`, switch remote branch được giao và xác nhận `git merge-base --is-ancestor origin/last-mile-base HEAD` trả exit code `0`.
 
 | Agent | Folder task | Branch đề xuất | Ownership không giao nhau |
 |---|---|---|---|

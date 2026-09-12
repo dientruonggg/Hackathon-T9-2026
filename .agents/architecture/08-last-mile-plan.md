@@ -93,7 +93,7 @@ vlc:policy:v1
 
 ## Merge rule
 
-1. Cả ba branch từ đúng `BASE_SHA` được ghi trong `../tasks/README.md`.
+1. Cả ba branch remote được tạo từ `origin/last-mile-base` ghi trong `../tasks/README.md`.
 2. C có thể viết harness/docs đồng thời nhưng chưa tuyên bố Golden E2E pass.
 3. Merge A/B theo thứ tự bất kỳ vì ownership không giao nhau.
 4. Rebase/merge C sau A/B, chạy root `npm run verify`.
