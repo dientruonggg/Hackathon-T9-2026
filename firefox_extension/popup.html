@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      body { width: 300px; font-family: Arial, sans-serif; padding: 10px; }
+      #chat-box { height: 250px; overflow-y: scroll; border: 1px solid #ccc; margin-bottom: 10px; padding: 5px; }
+      .msg { margin: 5px 0; }
+      .user { color: blue; font-weight: bold; }
+      .agent { color: green; }
+      #input-area { display: flex; }
+      #user-input { flex-grow: 1; padding: 5px; }
+      button { padding: 5px 10px; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <h3>🧠 Learning Companion</h3>
+    <div id="chat-box"></div>
+    <div id="input-area">
+      <input type="text" id="user-input" placeholder="Ask a question..." />
+      <button id="send-btn">Send</button>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

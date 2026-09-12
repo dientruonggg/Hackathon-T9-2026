@@ -30,7 +30,7 @@ Here is how it works with the architecture:
 3. **The Flow:**
     - Cloudflare gives you a public URL (e.g., `https://learning-bot.trycloudflare.com`).
     - You put this URL into the Discord Developer Portal or Zalo Official Account portal as your Webhook URL.
-    - **User messages Discord/Zalo** → **Discord/Zalo sends POST to Cloudflare** → **Cloudflared routes it to your local FastAPI** → **Google ADK processes it** → **Reply sent back through the tunnel.**
+    - **User messages Firefox Extension** → **Firefox Extension sends POST to Cloudflare** → **Cloudflared routes it to your local FastAPI** → **Google ADK processes it** → **Reply sent back through the tunnel.**
 
 ---
 
@@ -38,7 +38,7 @@ Here is how it works with the architecture:
 
 If we try to build the *entire* 4-6 week specification, we will run out of time. For an 8-hour hackathon, we must aggressively cut the scope and rely heavily on AI to generate boilerplate code.
 
-1. **Drop the Desktop App:** Building a Tauri/React app takes too much time. **Alternative:** Build a **Discord Bot** or **Zalo Bot**. A bot UI requires zero frontend coding!
+1. **Drop the Desktop App:** Building a Tauri/React app takes too much time. **Alternative:** Build a **Firefox Extension** or **Zalo Bot**. A bot UI requires zero frontend coding!
 2. **Drop Local LLM (Ollama):** Downloading and configuring local models will eat your time and RAM. **Alternative:** Use cloud APIs like **Gemini** for instant, high-quality responses.
 3. **Simplify the Database:** Skip Vector databases and complex schemas. **Alternative:** Use a simple **SQLite** database or even just in-memory JSON files to store the user's current goal and chat history.
 4. **Simplify the Agent Tools:** Only give the Google ADK agent 2 core tools to start: `get_user_profile()` and `update_learning_state()`.
@@ -51,14 +51,14 @@ If we try to build the *entire* 4-6 week specification, we will run out of time.
 *   **Hour 2-3: The Core Agent**
     *   Write the `Root Agent` using Google ADK and connect it to the Gemini API.
     *   Give it a strong system prompt based on your design document (acting as a learning companion, not a generic chatbot).
-*   **Hour 4-5: Discord/Zalo Integration**
-    *   Create the Discord/Zalo bot in their developer portals.
+*   **Hour 4-5: Firefox Extension Integration**
+    *   Create the Firefox Extension bot in their developer portals.
     *   Write the FastAPI webhook endpoint to receive messages from the bot, pass them to the ADK agent, and send the reply back.
 *   **Hour 6: Memory & State (The "Magic")**
     *   Implement a very basic SQLite database.
     *   Give the Agent a tool to read the user's "Knowledge State" so it remembers what they are learning between messages.
 *   **Hour 7: Testing & Debugging**
-    *   Talk to the bot on Discord/Zalo. Fix any crashes or hallucination issues together.
+    *   Talk to the bot on Firefox Extension. Fix any crashes or hallucination issues together.
 *   **Hour 8: Polish & Pitch**
     *   Clean up the code, prepare your demo, and practice your hackathon pitch!
 
@@ -95,7 +95,7 @@ Cách thức hoạt động dựa trên thiết kế hiện tại:
 3. **Luồng hoạt động (Flow):**
     - Cloudflare cấp cho bạn một URL công khai (ví dụ: `https://learning-bot.trycloudflare.com`).
     - Bạn lấy URL này dán vào phần cấu hình Webhook trên Discord Developer Portal hoặc Zalo OA (Official Account).
-    - **Người dùng chat trên Discord/Zalo** → **Discord/Zalo bắn request POST tới Cloudflare** → **`cloudflared` dẫn luồng dữ liệu về FastAPI local của bạn** → **Google ADK xử lý dữ liệu** → **Gửi câu trả lời ngược lại qua tunnel lên app.**
+    - **Người dùng chat trên Firefox Extension** → **Firefox Extension bắn request POST tới Cloudflare** → **`cloudflared` dẫn luồng dữ liệu về FastAPI local của bạn** → **Google ADK xử lý dữ liệu** → **Gửi câu trả lời ngược lại qua tunnel lên app.**
 
 ---
 
@@ -103,7 +103,7 @@ Cách thức hoạt động dựa trên thiết kế hiện tại:
 
 Nếu cố gắng xây dựng *toàn bộ* bản thiết kế vốn mất 4-6 tuần, chúng ta sẽ cháy giờ. Trong một cuộc thi Hackathon 8 tiếng, chúng ta phải cắt giảm phạm vi cực mạnh và dựa vào AI để viết code nhanh.
 
-1. **Bỏ qua App Desktop:** Làm app bằng Tauri/React sẽ mất rất nhiều thời gian setup frontend. **Thay thế:** Sử dụng luôn một **Discord Bot** / **Zalo Bot**. Dùng Bot thì bạn không cần code giao diện frontend một dòng nào!
+1. **Bỏ qua App Desktop:** Làm app bằng Tauri/React sẽ mất rất nhiều thời gian setup frontend. **Thay thế:** Sử dụng luôn một **Firefox Extension** / **Zalo Bot**. Dùng Bot thì bạn không cần code giao diện frontend một dòng nào!
 2. **Bỏ qua Local LLM (Ollama):** Việc tải và cấu hình model chạy local sẽ ngốn thời gian và RAM máy tính. **Thay thế:** Dùng luôn API của **Gemini** để có tốc độ phản hồi nhanh và thông minh.
 3. **Đơn giản hóa Database:** Bỏ qua Vector DB và cấu trúc dữ liệu phức tạp. **Thay thế:** Dùng **SQLite** cơ bản hoặc lưu thẳng ra file JSON để nhớ lịch sử chat và mục tiêu của user.
 4. **Đơn giản hóa Agent Tools:** Ban đầu chỉ cấp cho Google ADK agent 2 công cụ (tools): `get_user_profile()` (lấy thông tin user) và `update_learning_state()` (cập nhật trạng thái học tập).
@@ -117,12 +117,12 @@ Nếu cố gắng xây dựng *toàn bộ* bản thiết kế vốn mất 4-6 tu
     *   Viết `Root Agent` bằng Google ADK và nối với API của Gemini.
     *   Bơm cho nó một "System Prompt" thật xịn dựa trên file thiết kế (đóng vai người đồng hành học tập).
 *   **Giờ 4-5: Tích hợp Discord / Zalo**
-    *   Tạo Bot trên cổng Developer của Discord/Zalo.
+    *   Tạo Bot trên cổng Developer của Firefox Extension.
     *   Code API Webhook trên FastAPI để nhận tin nhắn từ người dùng, đưa cho Agent xử lý, và trả lời ngược lại bot.
 *   **Giờ 6: Trí nhớ & Trạng thái (Phép màu của ứng dụng)**
     *   Tích hợp SQLite cơ bản.
     *   Viết một tool cho Agent để nó có thể "đọc" trạng thái kiến thức của người dùng qua các lần chat.
 *   **Giờ 7: Test & Sửa lỗi**
-    *   Chat thử với con Bot trên Discord/Zalo. Lỗi ở đâu, fix ở đó.
+    *   Chat thử với con Bot trên Firefox Extension. Lỗi ở đâu, fix ở đó.
 *   **Giờ 8: Đánh bóng & Chuẩn bị thuyết trình**
     *   Dọn dẹp code, chuẩn bị kịch bản demo và tập pitch cho buổi chấm điểm Hackathon!

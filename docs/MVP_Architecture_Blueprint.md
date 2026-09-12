@@ -8,7 +8,7 @@ The system relies on a local server exposed to the internet via a secure tunnel,
 
 ```mermaid
 flowchart TD
-    User([Student]) <-->|Text Chat| UI[Discord / Zalo Bot]
+    User([Student]) <-->|Text Chat| UI[Firefox Extension]
     UI <-->|HTTP Webhooks| CF[Cloudflare Tunnel]
     CF <-->|Localhost Forwarding| API[FastAPI Server]
 

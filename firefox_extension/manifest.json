@@ -1,0 +1,14 @@
+{
+  "manifest_version": 2,
+  "name": "Learning Companion Agent",
+  "version": "1.0",
+  "description": "Your personal AI learning mentor in the browser.",
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "Learning Companion"
+  },
+  "permissions": [
+    "activeTab",
+    "http://localhost:8000/*"
+  ]
+}
