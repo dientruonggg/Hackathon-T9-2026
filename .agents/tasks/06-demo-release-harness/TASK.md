@@ -22,6 +22,7 @@ Tạo đường chạy lặp lại được cho cả team và chuẩn bị cách
 
 - `scripts/demo-preflight.ts` — read-only checks, exit `0` khi các check bắt buộc pass và khác `0` khi fail.
 - `.agents/architecture/09-firefox-demo-runbook.md` — lệnh chạy và hướng dẫn Temporary Add-on/storage.
+- `.agents/architecture/10-firefox-signing-release.md` — signed `.xpi`, self-distribution và AMO; không chứa credential.
 - `.agents/evidence/demo-e2e-result.md` — bảng PASS/FAIL/evidence không chứa raw browsing content.
 - Root npm script `demo:preflight` gọi file TypeScript trên; task 06 được phép thêm `tsx` root devDependency nếu hoisting hiện tại không đủ.
 
@@ -92,7 +93,7 @@ article -> sidebar -> viewport đúng -> ask -> Qwen answer
 
 - Người mới clone repo có thể chạy theo README mà không hỏi lệnh ẩn.
 - `npm run verify` pass trên main đã merge.
-- Có bằng chứng Qwen local và tunnel nhưng demo mặc định ưu tiên localhost.
+- Có bằng chứng Qwen local. Chỉ bắt buộc bằng chứng tunnel khi `TUNNEL_BASE_URL` được cấu hình; nếu không, ghi `SKIPPED_OPTIONAL`.
 - Golden E2E chỉ ghi PASS cho bước đã quan sát thật.
 - Không commit `.env`, AMO credentials, tunnel token hoặc raw browsing content.
 - Không tự push/publish add-on khi chưa có yêu cầu rõ của chủ dự án.

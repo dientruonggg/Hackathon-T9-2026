@@ -27,8 +27,15 @@ export type SafeAgentEvent =
       turnId: string;
       step: 1 | 2 | 3;
       toolName: AgentToolName;
-      status: "SUCCESS" | "ERROR";
-      errorCode?: AppErrorCode;
+      status: "SUCCESS";
+    }
+  | {
+      event: "agent.tool.completed";
+      turnId: string;
+      step: 1 | 2 | 3;
+      toolName: AgentToolName;
+      status: "ERROR";
+      errorCode: AppErrorCode;
     }
   | {
       event: "agent.turn.completed";
@@ -74,6 +81,7 @@ Không đổi HTTP/shared contracts. Tạo observer nhỏ inject được:
 - `started` chỉ emit sau khi request parse thành công và có `turnId` hợp lệ.
 - `step` là model step hiện tại, chỉ nhận 1, 2 hoặc 3.
 - `toolCount` là số event `agent.tool.completed` của turn, gồm cả SUCCESS và ERROR.
+- SUCCESS không có `errorCode`; ERROR bắt buộc có `errorCode`.
 - `modelName` lấy từ `AgentTurnResponse.model.name`; không log base URL/provider headers.
 - Mỗi started turn phải kết thúc bằng đúng một terminal event: completed hoặc failed, không cả hai.
 
@@ -82,6 +90,7 @@ Không đổi HTTP/shared contracts. Tạo observer nhỏ inject được:
 - successful turn có started/tool/completed;
 - provider error có started/failed và đúng error code;
 - tool failure có `agent.tool.completed` status ERROR;
+- tool SUCCESS không có errorCode và tool ERROR luôn có errorCode;
 - duration không âm và toolCount đúng;
 - serialized captured events không chứa fixture secret/raw question/viewport/memory/prompt;
 - HTTP response không chứa stack trace.

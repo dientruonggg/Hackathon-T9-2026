@@ -45,7 +45,7 @@ Chỉ log `turnId`, `step`, `toolName`, status/error code, model, duration. Khô
 
 ## Workstream C — Demo/release harness
 
-Owner: root scripts/docs và `.agents/**`.
+Owner: `scripts/**`, root `README.md`, `.env.example`, `.agents/**`, và root `package.json`/`package-lock.json` chỉ nếu cần đăng ký script `demo:preflight`.
 
 - Chuẩn hóa lệnh kiểm tra Ollama, API, build và Firefox Temporary Add-on.
 - Hướng dẫn inspect `browser.storage.local` bằng Extension Debugger.
@@ -82,6 +82,7 @@ Workstream C chỉ gọi public npm scripts/endpoints/storage keys:
 
 ```text
 npm run verify
+npm run demo:preflight
 npm run dev:api
 npm run start:firefox --workspace @vlc/firefox-extension
 http://127.0.0.1:11434/v1
