@@ -1,50 +1,11 @@
-type PolicySettings = {
-  allowedDomains?: readonly string[];
-  blockedDomains?: readonly string[];
-};
-
-type PolicyInput = {
-  url: string;
-  title?: string;
-  contentType?: string;
-  settings?: PolicySettings;
-};
-
-type SourceType =
-  | "HTML_ARTICLE"
-  | "DOCUMENTATION"
-  | "BLOG"
-  | "SEARCH_RESULTS"
-  | "PDF"
-  | "VIDEO_PLATFORM"
-  | "SOCIAL_FEED"
-  | "PRIVATE_CHAT"
-  | "WEBMAIL"
-  | "SENSITIVE_PORTAL"
-  | "UNKNOWN";
-
-type PolicyDecision = "ALLOW" | "BLOCK" | "ASK";
-
-type PolicyReason =
-  | "SUPPORTED_HTML"
-  | "USER_ALLOWED_DOMAIN"
-  | "USER_BLOCKED_DOMAIN"
-  | "NON_HTTP_PROTOCOL"
-  | "PDF_NOT_SUPPORTED"
-  | "VIDEO_NOT_SUPPORTED"
-  | "SOCIAL_NOT_SUPPORTED"
-  | "PRIVATE_CONTENT_BLOCKED"
-  | "SENSITIVE_CONTENT_BLOCKED"
-  | "UNKNOWN_SOURCE";
-
-type PolicyResult = {
-  decision: PolicyDecision;
-  sourceType: SourceType;
-  reasonCode: PolicyReason;
-  safeUrl: string;
-  hostname?: string;
-  userMessage: string;
-};
+import type {
+  Result,
+  SourcePolicyDecision,
+  SourcePolicyInput,
+  SourcePolicyReasonCode,
+  SourcePolicyResult,
+  SourceType,
+} from "@vlc/contracts";
 
 const VIDEO_DOMAINS = ["youtube.com", "youtu.be", "vimeo.com"] as const;
 const SOCIAL_DOMAINS = [
@@ -81,17 +42,9 @@ const SENSITIVE_DOMAIN_HINTS = [
   "insurance",
 ] as const;
 
-export async function checkSourcePolicy(input: PolicyInput): Promise<
-  | { ok: true; data: PolicyResult }
-  | {
-      ok: false;
-      error: {
-        code: "VALIDATION_ERROR";
-        message: string;
-        retryable: false;
-      };
-    }
-> {
+export async function checkSourcePolicy(
+  input: SourcePolicyInput,
+): Promise<Result<SourcePolicyResult>> {
   let parsed: URL;
   try {
     parsed = new URL(input.url);
@@ -108,7 +61,7 @@ export async function checkSourcePolicy(input: PolicyInput): Promise<
 
   const hostname = normalizeDomain(parsed.hostname);
   const safeUrl = toSafeUrl(parsed);
-  const settings = input.settings ?? {};
+  const settings = input.settings;
 
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     return allowedResult(
@@ -171,7 +124,7 @@ function classifyHardBlock(
 ):
   | {
       sourceType: SourceType;
-      reasonCode: PolicyReason;
+      reasonCode: SourcePolicyReasonCode;
       userMessage: string;
     }
   | undefined {
@@ -239,13 +192,13 @@ function classifyAllowedSource(url: URL): SourceType {
 }
 
 function allowedResult(
-  decision: PolicyDecision,
+  decision: SourcePolicyDecision,
   sourceType: SourceType,
-  reasonCode: PolicyReason,
+  reasonCode: SourcePolicyReasonCode,
   safeUrl: string,
   hostname: string,
   userMessage: string,
-): { ok: true; data: PolicyResult } {
+): { ok: true; data: SourcePolicyResult } {
   return {
     ok: true,
     data: { decision, sourceType, reasonCode, safeUrl, hostname, userMessage },

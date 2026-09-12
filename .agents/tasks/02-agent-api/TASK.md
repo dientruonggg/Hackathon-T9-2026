@@ -1,5 +1,7 @@
 # Task Agent 2 — Agent API
 
+> Status 2026-09-12: implementation đã được nối vào `main`; tests/build/runtime health pass. Còn smoke turn thành công với Ollama/OpenRouter thật. Xem `../../architecture/07-integration-status.md`.
+
 ## Mission
 
 Xây Fastify Agent API trong `apps/agent-api/**`, gồm validation, system prompt, pure tool registry, agent loop tối đa 3 bước, OpenAI-compatible adapter và fake-provider tests.

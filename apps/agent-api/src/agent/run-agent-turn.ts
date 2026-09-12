@@ -139,7 +139,7 @@ export async function runAgentTurn(
       }
     } else {
       // Model returned final text answer
-      finalAnswer = res.data.text ?? "";
+      finalAnswer = (res.data.text ?? "").slice(0, 4000);
       break;
     }
   }

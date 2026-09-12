@@ -26,6 +26,9 @@ export function buildApp(deps: AppDependencies = {}): FastifyInstance {
       const isAllowed = config.corsOrigins.some((pattern) => {
         if (pattern === origin) return true;
         if (pattern.endsWith("*") && origin.startsWith(pattern.slice(0, -1))) return true;
+        if ((pattern.endsWith(":") || pattern.endsWith("://")) && origin.startsWith(pattern)) {
+          return true;
+        }
         return false;
       });
 

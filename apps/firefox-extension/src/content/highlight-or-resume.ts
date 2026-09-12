@@ -1,13 +1,11 @@
-type ResumeInput = {
-  tabId: number;
-  expectedCanonicalUrl: string;
-  anchor: {
-    heading: string;
-    textQuote: string;
-    scrollRatio: number;
-    fingerprint: string;
-  };
-};
+import type {
+  AppErrorCode,
+  HighlightOrResumeInput,
+  HighlightOrResumeOutput,
+  Result,
+} from "@vlc/contracts";
+
+type ResumeInput = HighlightOrResumeInput;
 
 type ResumeEnvironment = {
   document: Document;
@@ -19,7 +17,11 @@ type ResumeEnvironment = {
 
 const RESUME_SELECTORS = "h1,h2,h3,h4,h5,h6,p,li,pre,blockquote,td,th,figcaption";
 
-export async function highlightOrResume(input: unknown) {
+export function highlightOrResume(
+  input: HighlightOrResumeInput,
+): Promise<Result<HighlightOrResumeOutput>>;
+export function highlightOrResume(input: unknown): Promise<Result<HighlightOrResumeOutput>>;
+export async function highlightOrResume(input: unknown): Promise<Result<HighlightOrResumeOutput>> {
   return highlightOrResumeInEnvironment(input, {
     document,
     locationHref: window.location.href,
@@ -32,7 +34,7 @@ export async function highlightOrResume(input: unknown) {
 export async function highlightOrResumeInEnvironment(
   input: unknown,
   environment: ResumeEnvironment,
-) {
+): Promise<Result<HighlightOrResumeOutput>> {
   const parsed = parseResumeInput(input);
   if (!parsed.ok) return parsed;
 
@@ -166,7 +168,7 @@ function success(strategy: "TEXT_QUOTE" | "HEADING" | "SCROLL_RATIO", scrollRati
   };
 }
 
-function failure(code: string, message: string, retryable: boolean) {
+function failure(code: AppErrorCode, message: string, retryable: boolean): Result<never> {
   return { ok: false as const, error: { code, message, retryable } };
 }
 

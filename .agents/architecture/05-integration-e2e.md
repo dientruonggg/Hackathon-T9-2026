@@ -92,8 +92,8 @@ Chỉ Agent 3 được chạy lệnh cài thêm package làm thay đổi root `p
 2. Cuộn tới heading H và mở sidebar.
 3. Xác nhận sidebar chỉ hiện text trong viewport.
 4. Hỏi “Đoạn này đang giải thích gì?”.
-5. Xác nhận answer có grounding viewport và tool trace phía API.
-6. Click `Chưa hiểu`, nhập note ngắn, xác nhận lưu.
+5. Xác nhận answer và grounding label hiển thị trong sidebar.
+6. Click `Chưa hiểu`; thao tác bấm là xác nhận ghi local memory.
 7. Đóng rồi mở lại sidebar tại cùng heading.
 8. Xác nhận card “Bạn từng ở đây” hiển thị `Chưa hiểu`.
 9. Click resume/highlight.
@@ -105,7 +105,7 @@ Chỉ Agent 3 được chạy lệnh cài thêm package làm thay đổi root `p
 2. Mở sidebar.
 3. UI hiện lý do bị chặn.
 4. Network log chứng minh không gọi `/v1/agent/turn`.
-5. Capture spy chứng minh content script không đọc DOM.
+5. Unit test `no capture/API when blocked` là bằng chứng tự động cho nhánh không đọc DOM.
 
 ## 8. Definition of Done chung
 

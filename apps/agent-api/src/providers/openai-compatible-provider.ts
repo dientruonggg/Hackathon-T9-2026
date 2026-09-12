@@ -11,6 +11,8 @@ export interface OpenAICompatibleProviderOptions {
   apiKey?: string | undefined;
   baseURL?: string | undefined;
   model: string;
+  timeoutMs?: number | undefined;
+  defaultHeaders?: Record<string, string> | undefined;
   client?: OpenAI | undefined;
 }
 
@@ -21,7 +23,9 @@ export function createOpenAICompatibleProvider(
     options.client ??
     new OpenAI({
       apiKey: options.apiKey || "dummy-key-for-local-testing",
-      baseURL: options.baseURL
+      baseURL: options.baseURL,
+      timeout: options.timeoutMs,
+      defaultHeaders: options.defaultHeaders
     });
 
   return {
@@ -130,10 +134,15 @@ export function createOpenAICompatibleProvider(
           error.name === "APIConnectionTimeoutError" ||
           msgLower.includes("timeout") ||
           msgLower.includes("timed out");
+        const isConnectionFailure =
+          error.name === "APIConnectionError" ||
+          msgLower.includes("connection error") ||
+          msgLower.includes("connect econnrefused") ||
+          msgLower.includes("fetch failed");
         const appError: AppError = {
-          code: isTimeout ? "AGENT_UNAVAILABLE" : "MODEL_ERROR",
+          code: isTimeout || isConnectionFailure ? "AGENT_UNAVAILABLE" : "MODEL_ERROR",
           message: error.message || "LLM provider invocation failed",
-          retryable: isTimeout
+          retryable: isTimeout || isConnectionFailure
         };
         return { ok: false, error: appError };
       }

@@ -8,7 +8,9 @@ async function startServer(): Promise<void> {
   const provider = createOpenAICompatibleProvider({
     apiKey: config.openaiApiKey,
     baseURL: config.openaiBaseUrl,
-    model: config.openaiModel
+    model: config.openaiModel,
+    timeoutMs: config.openaiTimeoutMs,
+    defaultHeaders: config.openaiDefaultHeaders
   });
 
   const app = buildApp({ config, provider });

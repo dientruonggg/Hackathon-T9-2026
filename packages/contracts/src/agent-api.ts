@@ -55,12 +55,12 @@ export interface ShortSession {
   sessionId: string;
   tabId: number;
   status: SidebarStatus;
-  policy?: SourcePolicyResult;
-  context?: ViewportContext;
+  policy?: SourcePolicyResult | undefined;
+  context?: ViewportContext | undefined;
   relatedMemories: MemorySummary[];
   messages: ChatMessage[];
-  pendingAction?: PendingUserAction;
-  lastError?: AppError;
+  pendingAction?: PendingUserAction | undefined;
+  lastError?: AppError | undefined;
 }
 
 export const AgentPermissionsSchema = z.object({
@@ -105,7 +105,7 @@ export interface GroundingRef {
   kind: Exclude<GroundingKind, "INSUFFICIENT">;
   refId: string;
   label: string;
-  url?: string;
+  url?: string | undefined;
 }
 
 export const AgentToolNameSchema = z.enum([
@@ -127,7 +127,7 @@ export interface ToolTraceEntry {
   step: number;
   toolName: AgentToolName;
   status: "SUCCESS" | "ERROR";
-  errorCode?: AppErrorCode;
+  errorCode?: AppErrorCode | undefined;
 }
 
 export const AgentTurnResponseSchema = z.object({

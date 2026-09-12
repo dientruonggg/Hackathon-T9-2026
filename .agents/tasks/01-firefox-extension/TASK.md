@@ -1,5 +1,7 @@
 # Task Agent 1 — Firefox Extension
 
+> Status 2026-09-12: implementation đã được nối vào `main`; automated AC pass. Còn manual golden E2E với Firefox + model thật. Xem `../../architecture/07-integration-status.md`.
+
 ## Mission
 
 Xây phần Firefox Temporary Add-on hoàn chỉnh trong `apps/firefox-extension/**`: source policy, viewport capture, sidebar, pipeline gọi API, marker buttons và resume/highlight. Tối ưu để demo trực tiếp trong ngày hackathon.

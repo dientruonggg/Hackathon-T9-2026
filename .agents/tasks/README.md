@@ -1,5 +1,11 @@
 # Three-Agent Work Plan
 
+## Trạng thái tích hợp
+
+Ba task đã được hợp nhất vào `main` local. Không tiếp tục code trên ba nhánh cũ trừ khi cần truy vết commit. Trạng thái verify và việc còn lại nằm tại [`../architecture/07-integration-status.md`](../architecture/07-integration-status.md).
+
+Các `TASK.md` bên dưới được giữ làm acceptance criteria và lịch sử phân công; ownership tách nhánh không còn áp dụng cho integration fixes trên `main`.
+
 Ba task dưới đây là prompt độc lập để giao đồng thời. Mỗi agent có một branch và một vùng file riêng.
 
 Có thể copy nguyên nội dung `TASK.md` tương ứng cho coding agent. Task đã chứa mission, file map, public contracts, tests, AC và handoff; không cần viết lại thành prompt ngắn hơn.

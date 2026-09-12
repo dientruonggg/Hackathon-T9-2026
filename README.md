@@ -1,218 +1,209 @@
 # Viewport Learning Companion
 
-Firefox extension được người học chủ động mở để hỏi về đúng phần HTML đang hiện trong viewport, đánh dấu `Đã hiểu`, `Chưa hiểu`, `Xem lại sau` và được gợi lại khi quay lại section đó.
+Firefox extension do người học chủ động mở để hỏi về đúng phần HTML đang hiện trong viewport. Người dùng có thể đánh dấu `Đã hiểu`, `Chưa hiểu`, `Xem lại sau`; dấu mốc được lưu trong `browser.storage.local` và được gợi lại khi quay về cùng section.
 
-Repo hiện ở trạng thái **architecture + runnable TypeScript scaffold** để ba người bắt đầu code song song. Nghiệp vụ chính vẫn được đánh dấu `TODO` theo từng task.
+MVP không theo dõi nền, không gửi full-page dump, không đọc PDF/video/social/private chat/webmail và không gửi API key vào extension. Capture lấy text từ các DOM block giao với viewport, giới hạn tối đa 4.000 ký tự; một DOM block rất dài có thể đóng góp phần text nằm ngoài mép màn hình.
 
-## 1. Yêu cầu môi trường
+## Yêu cầu
 
-- Firefox Desktop `>= 142` (để manifest data-collection declaration được hỗ trợ/lint sạch).
-- Node.js `>= 22`.
-- npm `>= 10`.
-- Một OpenAI-compatible API key. OpenRouter dùng được.
-- Git.
+- Firefox Desktop 142 trở lên.
+- Node.js 22 trở lên và npm 10 trở lên.
+- Ollama với `qwen3:8b`, hoặc một model OpenAI-compatible có hỗ trợ `tools/tool_calls`.
 
-Kiểm tra:
+Repo dùng `web-ext` local trong lockfile; không cần `npm install -g web-ext`.
 
-```powershell
-node --version
-npm --version
-git --version
-```
-
-Không bắt buộc `npm install -g web-ext`. Repo đã khóa `web-ext` local trong `package-lock.json`; chạy qua npm script để mọi máy dùng cùng version.
-
-## 2. Cài project
-
-Tại root repo:
+## Cài đặt
 
 ```powershell
 npm install
 Copy-Item .env.example .env
-```
-
-Mở `.env` và điền key cục bộ. Ví dụ OpenRouter:
-
-```dotenv
-OPENAI_API_KEY=your-real-key-here
-OPENAI_BASE_URL=https://openrouter.ai/api/v1
-OPENAI_MODEL=provider/model-name
-OPENAI_TIMEOUT_MS=30000
-```
-
-Chọn model đang khả dụng trong tài khoản OpenRouter của team. Không commit `.env` hoặc gửi key vào chat/log.
-
-Model phải hỗ trợ OpenAI-compatible Chat Completions `tools/tool_calls`; đây là điều kiện để agent loop chạy. Nếu dùng OpenAI trực tiếp, đổi `OPENAI_BASE_URL=https://api.openai.com/v1` và đặt model tương ứng, không cần đổi source.
-
-## 3. Kiến trúc code
-
-```text
-apps/
-├── firefox-extension/  # Agent 1: manifest, Vite, DOM, sidebar, pipelines
-└── agent-api/           # Agent 2: Fastify, agent loop, OpenAI-compatible provider
-
-packages/
-├── contracts/           # Agent 3: shared TypeScript types + Zod schemas
-└── memory/              # Agent 3: browser.storage.local + deterministic matcher
-
-.agents/
-├── architecture/        # Kiến trúc tổng/con, contracts, E2E
-└── tasks/               # Ba prompt code độc lập
-```
-
-Code cũ `firefox_extension/` không thuộc kiến trúc mới và không được ba agent sửa. Thư mục Python `src/` cũ đã được loại khỏi scaffold.
-
-Điểm nối duy nhất giữa các phần:
-
-- Extension/API dùng type từ `@vlc/contracts`.
-- Extension lưu cục bộ qua `MemoryRepository` từ `@vlc/memory`.
-- Extension gọi API qua `POST /v1/agent/turn`.
-- Không import source xuyên app.
-
-Đọc kiến trúc từ [`.agents/architecture/README.md`](.agents/architecture/README.md).
-
-## 4. Chia việc ba người
-
-| Người | Branch | Task | Code được sửa |
-|---|---|---|---|
-| Bạn + Codex | `feat/firefox-extension` | [Agent 1](.agents/tasks/01-firefox-extension/TASK.md) | `apps/firefox-extension/**` |
-| Thành viên 2 | `feat/agent-api` | [Agent 2](.agents/tasks/02-agent-api/TASK.md) | `apps/agent-api/**` |
-| Thành viên 3 | `feat/contracts-memory` | [Agent 3](.agents/tasks/03-contracts-memory/TASK.md) | root npm/config + `packages/**` |
-
-Agent 1 khó nhất vì phải nối Firefox permission, Vite, viewport DOM, privacy, UI và E2E. Agent 3 merge trước để Agent 1/2 dùng shared contracts thật.
-
-Mỗi người tạo branch từ cùng commit bootstrap này:
-
-```powershell
-git switch -c feat/firefox-extension
-# hoặc feat/agent-api
-# hoặc feat/contracts-memory
-```
-
-Nếu mỗi người có clone riêng, chỉ cần checkout đúng branch. Nếu chạy nhiều agent trên cùng máy, dùng Git worktree riêng; không để ba agent đổi branch trong cùng một working tree.
-
-## 5. Quy tắc để không conflict
-
-1. Chỉ sửa folder được task giao.
-2. Chỉ Agent 3 sửa root `package.json`, `package-lock.json`, `tsconfig.base.json`, `.env.example`.
-3. Agent 1/2 không tự cài dependency mới làm đổi lockfile; ghi dependency request trong handoff.
-4. Không copy shared interfaces vào app. Import từ `@vlc/contracts`.
-5. Không tự đổi public function/HTTP/schema trong [`04-shared-contracts.md`](.agents/architecture/04-shared-contracts.md).
-6. Nếu contract thiếu, ghi proposal; integrator xử lý bằng commit riêng.
-7. Không mở rộng sang PDF, YouTube, ChatGPT, tracking nền, vector DB hoặc cloud memory.
-
-Thứ tự merge: `contracts-memory -> agent-api -> firefox-extension -> integration fix`.
-
-## 6. Build TypeScript thành JavaScript
-
-```powershell
-npm run typecheck
-npm test
-npm run build
-```
-
-Artifact:
-
-| Workspace | Compiler/bundler | Output chạy thật |
-|---|---|---|
-| `@vlc/firefox-extension` | Vite + web-extension plugin | `apps/firefox-extension/dist/manifest.json` và JS bundles |
-| `@vlc/agent-api` | tsup | `apps/agent-api/dist/server.js` |
-| `@vlc/contracts` | TypeScript compiler | `packages/contracts/dist/*.js` + `.d.ts` |
-| `@vlc/memory` | TypeScript compiler | `packages/memory/dist/*.js` + `.d.ts` |
-
-Chạy toàn bộ gate:
-
-```powershell
 npm run verify
 ```
 
-## 7. Chạy Agent API
+Không commit `.env`, API key hoặc dữ liệu duyệt web thật.
 
-Trong lúc code:
+## Chọn model
+
+### Cách ổn định nhất cho demo: Ollama cùng máy
+
+Trên Windows, mở ứng dụng Ollama trước; bản cài desktop thường chạy service nền. Sau đó:
+
+```powershell
+ollama pull qwen3:8b
+ollama list
+```
+
+Chỉ chạy `ollama serve` trong một terminal riêng nếu `127.0.0.1:11434` chưa hoạt động; không chạy thêm nếu service desktop đã giữ port.
+
+Giữ cấu hình sau trong `.env`:
+
+```dotenv
+OPENAI_API_KEY=ollama
+OPENAI_BASE_URL=http://127.0.0.1:11434/v1
+OPENAI_MODEL=qwen3:8b
+OPENAI_TIMEOUT_MS=60000
+```
+
+Kiểm tra Ollama trước khi chạy hệ thống:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:11434/api/tags
+Invoke-RestMethod http://127.0.0.1:11434/v1/models
+```
+
+GET model list chưa chứng minh tool calling. Chạy thêm smoke test bắt model gọi một function:
+
+```powershell
+$tool = @{
+  type = 'function'
+  function = @{
+    name = 'get_viewport_context'
+    description = 'Return current viewport context'
+    parameters = @{ type = 'object'; properties = @{}; required = @() }
+  }
+}
+$body = @{
+  model = 'qwen3:8b'
+  messages = @(@{ role = 'user'; content = 'Call get_viewport_context now.' })
+  tools = @($tool)
+} | ConvertTo-Json -Depth 10
+$result = Invoke-RestMethod `
+  -Uri http://127.0.0.1:11434/v1/chat/completions `
+  -Method Post -ContentType 'application/json' -Body $body
+$result.choices[0].message.tool_calls
+```
+
+Kết quả phải có `function.name = get_viewport_context`.
+
+### Qua Cloudflare Tunnel
+
+Chỉ dùng khi Agent API và Ollama không cùng máy:
+
+```dotenv
+OPENAI_API_KEY=ollama
+OPENAI_BASE_URL=https://qwen.luongduytoan.io.vn/v1
+OPENAI_MODEL=qwen3:8b
+```
+
+Nếu `/api/tags` và `/v1/models` trả `502`, tunnel đã nhận request nhưng chưa kết nối được tới Ollama origin. Kiểm tra `ollama serve`, port tunnel và firewall trước khi sửa code Agent.
+
+### OpenRouter dự phòng
+
+```dotenv
+OPENAI_API_KEY=your-local-secret
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_MODEL=provider/model-name
+```
+
+Model phải hỗ trợ Chat Completions tool calling. Source code không cần đổi khi chuyển provider.
+
+## Chạy hệ thống
+
+Terminal 1 — Agent API:
 
 ```powershell
 npm run dev:api
 ```
 
-Sau build:
+Smoke test:
 
 ```powershell
-npm run build --workspace @vlc/agent-api
-npm run start --workspace @vlc/agent-api
+Invoke-RestMethod http://127.0.0.1:8787/health
 ```
 
-API dự kiến:
-
-- `GET http://127.0.0.1:8787/health`
-- `POST http://127.0.0.1:8787/v1/agent/turn`
-
-Scaffold hiện chưa listen server; đó là TODO của Agent 2.
-
-## 8. Build và load Firefox extension
-
-Build/lint:
+Terminal 2 — build extension:
 
 ```powershell
 npm run build --workspace @vlc/firefox-extension
 npm run lint:extension --workspace @vlc/firefox-extension
 ```
 
-Load tự động bằng local `web-ext`:
+Load thủ công:
+
+1. Mở `about:debugging#/runtime/this-firefox`.
+2. Chọn **Load Temporary Add-on**.
+3. Chọn `apps/firefox-extension/dist/manifest.json`.
+4. Mở hoặc reload một bài viết HTML.
+5. Bấm icon extension để mở sidebar.
+
+Có thể để `web-ext` mở Firefox tự động:
 
 ```powershell
 npm run start:firefox --workspace @vlc/firefox-extension
 ```
 
-Hoặc load thủ công:
+`web-ext run` tạo một Firefox profile tạm riêng; hãy mở article trong chính cửa sổ Firefox mới đó, không chờ add-on xuất hiện ở profile Firefox đang dùng.
 
-1. Mở `about:debugging#/runtime/this-firefox`.
-2. Chọn **Load Temporary Add-on**.
-3. Chọn `apps/firefox-extension/dist/manifest.json`.
-4. Mở sidebar `Learning Companion`.
-
-Development mode:
-
-```powershell
-npm run dev:extension
-```
-
-Vite plugin sẽ build các TypeScript entry từ manifest và nhắm Firefox. Scaffold hiện load sidebar placeholder; policy/capture/UI thật là TODO Agent 1.
-
-## 9. Npm scripts
-
-| Lệnh | Ý nghĩa |
-|---|---|
-| `npm run typecheck` | Check TypeScript tất cả workspaces |
-| `npm test` | Chạy Vitest |
-| `npm run build` | Sinh toàn bộ JavaScript artifacts |
-| `npm run lint:extension` | Mozilla `web-ext lint` trên `dist` |
-| `npm run verify` | Typecheck + tests + build + extension lint |
-| `npm run dev:api` | Watch Agent API |
-| `npm run dev:extension` | Watch/build extension và mở Firefox nếu môi trường hỗ trợ |
-
-## 10. Demo E2E phải đạt
+## Request flow
 
 ```text
-article HTML
-  -> mở sidebar
-  -> policy allow
-  -> capture viewport
-  -> hỏi Agent
-  -> trả lời có grounding
-  -> user đánh dấu Chưa hiểu
-  -> đóng/mở sidebar
-  -> memory được gợi lại
-  -> đổi thành Đã hiểu, revision tăng
+người dùng mở sidebar
+  -> source policy
+  -> content script capture viewport đang thấy
+  -> local memory matcher recall tối đa 5 dấu mốc
+  -> chưa gọi model
+
+người dùng gửi câu hỏi
+  -> capture lại viewport đúng lúc bấm hỏi
+  -> POST http://127.0.0.1:8787/v1/agent/turn
+  -> Qwen/OpenRouter gọi tools trong agent loop tối đa 3 bước
+  -> sidebar render answer + grounding
+
+người dùng bấm trạng thái
+  -> xác nhận bằng chính thao tác bấm
+  -> save/upsert marker trong browser.storage.local
+  -> cùng fingerprint tăng revision, không tạo bản trùng
 ```
 
-Nhánh chặn: mở PDF/private source -> hiện lý do -> không capture DOM -> không gọi API.
+## Cấu trúc code
 
-Chi tiết integration và handoff: [`.agents/architecture/05-integration-e2e.md`](.agents/architecture/05-integration-e2e.md).
+```text
+apps/
+├── firefox-extension/  # manifest, content capture, sidebar, pipelines, API client
+└── agent-api/          # Fastify, provider OpenAI-compatible, agent loop, tools
 
-## 11. Trạng thái scaffold
+packages/
+├── contracts/          # TypeScript types + Zod schemas dùng chung
+└── memory/              # browser.storage.local repository + deterministic matcher
 
-- Dependencies đã cài bằng npm và khóa trong `package-lock.json`.
-- OpenAI-compatible/OpenRouter env đã soạn, không có key thật.
-- Firefox Vite manifest pipeline đã scaffold.
-- Mọi file nghiệp vụ có `TODO(Agent N)` và task trỏ đúng đường dẫn.
-- Chưa coi `--passWithNoTests` là hoàn thành; mỗi agent phải thêm tests được yêu cầu trước handoff.
+.agents/
+├── architecture/       # thiết kế và trạng thái integration
+└── tasks/              # task gốc của ba thành viên
+```
+
+Ranh giới tích hợp:
+
+- Extension và API chỉ trao đổi qua `POST /v1/agent/turn` và `@vlc/contracts`.
+- Extension chỉ lưu qua `MemoryRepository` từ `@vlc/memory`.
+- API stateless; long-term memory không đi lên server.
+- Storage keys: `vlc:markers:v1`, `vlc:policy:v1`, `vlc:settings:v1`.
+
+## Kiểm tra
+
+```powershell
+npm run typecheck
+npm test
+npm run build
+npm run lint:extension
+npm run verify
+```
+
+`npm run verify` là gate bắt buộc trước demo. Ngoài gate tự động, vẫn phải chạy Firefox golden E2E vì unit test không chứng minh sidebar/content-script render đúng trong browser thật.
+
+`API_PORT` phải giữ là `8787` trong MVP vì extension client và manifest permission được build cố định cho `127.0.0.1:8787`.
+
+## Golden E2E
+
+1. Mở một article HTML và cuộn tới heading dễ nhận biết.
+2. Mở sidebar; xác nhận source được phép và preview chỉ chứa viewport.
+3. Hỏi “Đoạn này đang giải thích gì?”.
+4. Xác nhận answer có grounding.
+5. Bấm `Chưa hiểu`.
+6. Đóng/mở sidebar tại cùng section; card memory phải xuất hiện.
+7. Bấm `Quay lại vị trí`.
+8. Bấm `Đã hiểu`; revision phải tăng.
+9. Mở PDF hoặc YouTube; sidebar phải từ chối trước capture và trước HTTP Agent API.
+
+## Trạng thái và bước kế tiếp
+
+Xem [integration status](.agents/architecture/07-integration-status.md) để biết phần đã verify, phần chưa runtime-verify và checklist ngay trước lúc quay demo.

@@ -13,7 +13,8 @@ Thư mục này là nguồn kiến trúc chuẩn để ba nhánh code cùng lúc
 7. [`04-shared-contracts.md`](04-shared-contracts.md) — type, function, endpoint và error code đã khóa.
 8. [`05-integration-e2e.md`](05-integration-e2e.md) — cách ghép ba nhánh và tiêu chí demo.
 9. [`06-one-day-plan.md`](06-one-day-plan.md) — timebox và fallback cho ngày thi.
-10. [`../tasks/README.md`](../tasks/README.md) — ownership, nhánh và thứ tự merge.
+10. [`07-integration-status.md`](07-integration-status.md) — trạng thái code/verify hiện tại và checklist trước demo.
+11. [`../tasks/README.md`](../tasks/README.md) — ownership, nhánh và thứ tự merge.
 
 ## Quyết định đã khóa
 

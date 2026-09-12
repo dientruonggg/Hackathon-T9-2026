@@ -56,9 +56,24 @@ describe("Slice 1: Configuration & Fastify Surface", () => {
   it("loadEnvConfig parses default environment variables correctly", () => {
     const config = loadEnvConfig({});
     expect(config.apiHost).toBe("127.0.0.1");
-    expect(config.apiPort).toBe(8000);
-    expect(config.openaiBaseUrl).toBe("https://api.openai.com/v1");
-    expect(config.openaiModel).toBe("openai/gpt-4o-mini");
+    expect(config.apiPort).toBe(8787);
+    expect(config.openaiBaseUrl).toBe("http://127.0.0.1:11434/v1");
+    expect(config.openaiModel).toBe("qwen3:8b");
+    expect(config.openaiTimeoutMs).toBe(60_000);
     expect(config.corsOrigins).toContain("moz-extension://*");
+  });
+
+  it("loads the documented origin and provider environment variables", () => {
+    const config = loadEnvConfig({
+      ALLOWED_ORIGIN_PREFIXES: "moz-extension://,http://localhost:",
+      OPENAI_BASE_URL: "https://qwen.example/v1",
+      OPENAI_MODEL: "qwen3:8b",
+      OPENAI_TIMEOUT_MS: "45000",
+      OPENROUTER_HTTP_REFERER: "http://localhost"
+    });
+
+    expect(config.corsOrigins).toEqual(["moz-extension://", "http://localhost:"]);
+    expect(config.openaiTimeoutMs).toBe(45_000);
+    expect(config.openaiDefaultHeaders).toEqual({ "HTTP-Referer": "http://localhost" });
   });
 });

@@ -44,7 +44,7 @@ export const agentTurnRoutes: FastifyPluginAsync<AgentTurnRouteOptions> = async 
     }
 
     // 3. Execute agent loop
-    const input = parsed.data as unknown as AgentTurnRequest;
+    const input: AgentTurnRequest = parsed.data;
     const result = await runAgentTurn(input, { provider: opts.provider });
 
     if (!result.ok) {

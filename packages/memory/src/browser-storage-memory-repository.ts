@@ -7,8 +7,11 @@ import type {
 import type { StorageAreaLike, Clock, IdGenerator, MemoryRepository } from "./memory-repository.js";
 import { matchMemories } from "./memory-matcher.js";
 
-const MARKER_PREFIX = "marker:";
-const POLICY_KEY = "policy:settings";
+export const MEMORY_STORAGE_KEYS = {
+  markers: "vlc:markers:v1",
+  policy: "vlc:policy:v1",
+  settings: "vlc:settings:v1"
+} as const;
 
 export function createBrowserStorageMemoryRepository(
   storage: StorageAreaLike,
@@ -35,17 +38,21 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
     private readonly idGenerator: IdGenerator
   ) {}
 
+  private async getMarkerRecord(): Promise<Record<string, MemoryMarker>> {
+    const data = await this.storage.get(MEMORY_STORAGE_KEYS.markers);
+    const stored = data[MEMORY_STORAGE_KEYS.markers];
+    return isRecord(stored) ? stored as Record<string, MemoryMarker> : {};
+  }
+
   private async getAllMarkers(): Promise<MemoryMarker[]> {
-    const data = await this.storage.get(null);
-    return Object.keys(data)
-      .filter(k => k.startsWith(MARKER_PREFIX))
-      .map(k => data[k] as MemoryMarker);
+    return Object.values(await this.getMarkerRecord());
   }
 
   async saveMarker(input: SaveMarkerInput): Promise<Result<MemoryMarker>> {
     try {
       const now = this.clock.now().toISOString();
-      const markers = await this.getAllMarkers();
+      const markerRecord = await this.getMarkerRecord();
+      const markers = Object.values(markerRecord);
       
       const existing = markers.find(m => 
         m.source.canonicalUrl === input.source.canonicalUrl && 
@@ -84,7 +91,9 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
         }) as any as MemoryMarker;
       }
 
-      await this.storage.set({ [`${MARKER_PREFIX}${marker.id}`]: marker });
+      await this.storage.set({
+        [MEMORY_STORAGE_KEYS.markers]: { ...markerRecord, [marker.id]: marker }
+      });
       return { ok: true, data: marker };
     } catch (e: any) {
       return { ok: false, error: { code: "MEMORY_WRITE_FAILED", message: e.message, retryable: true } };
@@ -103,9 +112,8 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
 
   async readMemory(memoryId: string): Promise<Result<MemoryMarker | null>> {
     try {
-      const key = `${MARKER_PREFIX}${memoryId}`;
-      const data = await this.storage.get(key);
-      const marker = data[key] as MemoryMarker | undefined;
+      const markers = await this.getMarkerRecord();
+      const marker = markers[memoryId];
       return { ok: true, data: marker || null };
     } catch (e: any) {
       return { ok: false, error: { code: "INTERNAL_ERROR", message: e.message, retryable: false } };
@@ -114,9 +122,8 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
 
   async updateUnderstanding(input: UpdateUnderstandingInput): Promise<Result<MemoryMarker>> {
     try {
-      const key = `${MARKER_PREFIX}${input.memoryId}`;
-      const data = await this.storage.get(key);
-      const existing = data[key] as MemoryMarker | undefined;
+      const markers = await this.getMarkerRecord();
+      const existing = markers[input.memoryId];
       if (!existing) {
         return { ok: false, error: { code: "MEMORY_NOT_FOUND", message: "Not found", retryable: false } };
       }
@@ -133,7 +140,9 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
         revision: existing.revision + 1
       }) as any as MemoryMarker;
 
-      await this.storage.set({ [key]: updated });
+      await this.storage.set({
+        [MEMORY_STORAGE_KEYS.markers]: { ...markers, [input.memoryId]: updated }
+      });
       return { ok: true, data: updated };
     } catch (e: any) {
       return { ok: false, error: { code: "MEMORY_WRITE_FAILED", message: e.message, retryable: true } };
@@ -142,29 +151,32 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
 
   async forgetMemory(input: ForgetMemoryInput): Promise<Result<ForgetMemoryOutput>> {
     try {
-      const markers = await this.getAllMarkers();
-      const toDelete: string[] = [];
+      const markers = await this.getMarkerRecord();
+      const idsToDelete: string[] = [];
 
       if (input.scope === "ONE") {
-        const key = `${MARKER_PREFIX}${input.memoryId}`;
-        toDelete.push(key);
+        if (markers[input.memoryId]) idsToDelete.push(input.memoryId);
       } else if (input.scope === "SOURCE") {
-        for (const m of markers) {
+        for (const m of Object.values(markers)) {
           if (m.source.canonicalUrl === input.canonicalUrl) {
-            toDelete.push(`${MARKER_PREFIX}${m.id}`);
+            idsToDelete.push(m.id);
           }
         }
       } else if (input.scope === "ALL") {
-        for (const m of markers) {
-          toDelete.push(`${MARKER_PREFIX}${m.id}`);
+        idsToDelete.push(...Object.keys(markers));
+      }
+
+      if (idsToDelete.length > 0) {
+        if (idsToDelete.length === Object.keys(markers).length) {
+          await this.storage.remove(MEMORY_STORAGE_KEYS.markers);
+        } else {
+          const remaining = { ...markers };
+          for (const id of idsToDelete) delete remaining[id];
+          await this.storage.set({ [MEMORY_STORAGE_KEYS.markers]: remaining });
         }
       }
 
-      if (toDelete.length > 0) {
-        await this.storage.remove(toDelete);
-      }
-
-      return { ok: true, data: { deletedCount: toDelete.length } };
+      return { ok: true, data: { deletedCount: idsToDelete.length } };
     } catch (e: any) {
       return { ok: false, error: { code: "MEMORY_WRITE_FAILED", message: e.message, retryable: true } };
     }
@@ -172,8 +184,8 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
 
   async getSourcePolicySettings(): Promise<Result<SourcePolicySettings>> {
     try {
-      const data = await this.storage.get(POLICY_KEY);
-      const settings = data[POLICY_KEY] as SourcePolicySettings | undefined;
+      const data = await this.storage.get(MEMORY_STORAGE_KEYS.policy);
+      const settings = data[MEMORY_STORAGE_KEYS.policy] as SourcePolicySettings | undefined;
       if (settings) {
         return { ok: true, data: settings };
       }
@@ -202,10 +214,14 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
         newSettings.blockedDomains = newSettings.blockedDomains.filter(d => d !== input.domain);
       }
 
-      await this.storage.set({ [POLICY_KEY]: newSettings });
+      await this.storage.set({ [MEMORY_STORAGE_KEYS.policy]: newSettings });
       return { ok: true, data: newSettings };
     } catch (e: any) {
       return { ok: false, error: { code: "MEMORY_WRITE_FAILED", message: e.message, retryable: true } };
     }
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

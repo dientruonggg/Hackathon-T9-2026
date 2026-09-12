@@ -46,4 +46,25 @@ describe("Slice 5: Provider Error Mapping", () => {
       expect(result.error.retryable).toBe(false);
     }
   });
+
+  it("maps connection failure to AGENT_UNAVAILABLE with retryable: true", async () => {
+    const mockClient = new OpenAI({ apiKey: "test-key" });
+    const connectionError = new Error("Connection error.");
+    connectionError.name = "APIConnectionError";
+    vi.spyOn(mockClient.chat.completions, "create").mockRejectedValueOnce(connectionError);
+
+    const provider = createOpenAICompatibleProvider({
+      model: "test-model",
+      client: mockClient
+    });
+
+    const result = await provider.generate({
+      messages: [{ role: "user", content: "Hello" }]
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: "AGENT_UNAVAILABLE", retryable: true }
+    });
+  });
 });

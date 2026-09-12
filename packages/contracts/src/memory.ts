@@ -48,9 +48,9 @@ export interface MemoryMarker {
   source: SourceRef;
   anchor: ViewportAnchor;
   status: MemoryStatus;
-  note?: string;
-  question?: string;
-  answerSummary?: string;
+  note?: string | undefined;
+  question?: string | undefined;
+  answerSummary?: string | undefined;
   evidence: MemoryEvidence[];
   createdAt: IsoTimestamp;
   updatedAt: IsoTimestamp;
@@ -83,9 +83,9 @@ export interface MemorySummary {
   source: SourceRef;
   anchor: ViewportAnchor;
   status: MemoryStatus;
-  note?: string;
-  question?: string;
-  answerSummary?: string;
+  note?: string | undefined;
+  question?: string | undefined;
+  answerSummary?: string | undefined;
   updatedAt: IsoTimestamp;
   revision: number;
   matchScore: number;

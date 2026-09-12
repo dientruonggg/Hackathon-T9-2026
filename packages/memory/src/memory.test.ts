@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createBrowserStorageMemoryRepository, matchMemories } from "./index.js";
+import {
+  createBrowserStorageMemoryRepository,
+  matchMemories,
+  MEMORY_STORAGE_KEYS
+} from "./index.js";
 import type { StorageAreaLike, Clock, IdGenerator } from "./memory-repository.js";
 import type { MemoryMarker } from "@vlc/contracts";
 
@@ -66,7 +70,8 @@ describe("Memory package", () => {
     expect(res2.data.id).toBe(res1.data.id);
 
     const data = await storage.get(null);
-    expect(Object.keys(data).filter(k => k.startsWith("marker:")).length).toBe(1);
+    const markerRecord = data[MEMORY_STORAGE_KEYS.markers] as Record<string, unknown>;
+    expect(Object.keys(markerRecord)).toHaveLength(1);
   });
 
   it("updateUnderstanding increments revision and appends evidence", async () => {
@@ -103,6 +108,15 @@ describe("Memory package", () => {
     const del3 = await repo.forgetMemory({ scope: "ALL", userConfirmed: true });
     expect(del3.ok).toBe(true);
     if (del3.ok) expect(del3.data.deletedCount).toBe(1);
+  });
+
+  it("forget ONE reports zero when the memory does not exist", async () => {
+    const result = await repo.forgetMemory({
+      scope: "ONE",
+      memoryId: "missing",
+      userConfirmed: true
+    });
+    expect(result).toEqual({ ok: true, data: { deletedCount: 0 } });
   });
 
   it("storage error mapping", async () => {

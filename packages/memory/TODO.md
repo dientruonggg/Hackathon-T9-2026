@@ -1,6 +1,5 @@
-# Agent 3 TODO — Memory
+# Memory Status
 
-Task chuẩn: [`../../.agents/tasks/03-contracts-memory/TASK.md`](../../.agents/tasks/03-contracts-memory/TASK.md).
+Browser-local repository và deterministic matcher đã triển khai. Storage keys hiện đúng kiến trúc `vlc:*:v1`.
 
-Memory phải ở `browser.storage.local`, không SQLite/vector/cloud. Upsert theo fingerprint và chỉ trả success sau storage write.
-
+Việc còn lại: inspect storage trong Firefox debugger khi chạy manual golden E2E để xác nhận persistence qua đóng/mở sidebar.

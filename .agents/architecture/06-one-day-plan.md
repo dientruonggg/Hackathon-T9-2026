@@ -13,7 +13,7 @@
 | Checkpoint 2:00 | Merge contracts commit vào branch | Merge contracts commit vào branch | Bàn giao contract hash |
 | 2:00–4:00 | Sidebar + open/ask pipelines | OpenAI-compatible adapter + prompt | Repository + matcher + tests |
 | Checkpoint 4:00 | Request parse shared schema | API response parse shared schema | Merge full Agent 3 branch |
-| 4:00–5:30 | Nối API + marker/resume | Chạy API thật với OpenRouter | Hỗ trợ contract-only integration |
+| 4:00–5:30 | Nối API + marker/resume | Chạy API thật với Ollama; OpenRouter dự phòng | Hỗ trợ contract-only integration |
 | 5:30–6:30 | Golden E2E và blocked-source E2E | Theo dõi safe logs/tool trace | Kiểm tra persisted marker/revision |
 | 6:30–7:30 | UI polish và demo reset | Error UX/model fallback | Fix boundary tests |
 | 7:30–8:00 | Freeze code, rehearsal 3 phút | Freeze code | `npm run verify`, freeze lockfile |
@@ -29,15 +29,15 @@
 
 Agent 1/2 không chờ toàn bộ repository mới bắt đầu; họ code bằng frozen docs và merge contract commit tại checkpoint.
 
-## 4. Model/OpenRouter preflight
+## 4. Model preflight
 
 Trước integration:
 
-1. Chọn model OpenRouter hỗ trợ OpenAI Chat Completions `tools/tool_calls`.
-2. Điền `.env` cục bộ.
-3. Gọi một request nhỏ để xác nhận key, base URL và model.
+1. Ưu tiên Ollama `qwen3:8b` cùng máy qua `http://127.0.0.1:11434/v1`.
+2. Chạy `/api/tags` và `/v1/models` trước khi điền `.env`.
+3. Gọi một request nhỏ để xác nhận base URL, model và `tools/tool_calls`.
 4. Giới hạn agent loop 3 steps và context size theo contract.
-5. Chuẩn bị model dự phòng trong cùng provider; chỉ đổi `OPENAI_MODEL`, không đổi code.
+5. Chuẩn bị OpenRouter làm dự phòng; chỉ đổi env, không đổi code.
 
 Agent 2 dùng `openai.chat.completions.create()` hoặc API tương thích có cùng `tools`/`tool_calls`. Không dùng riêng một SDK/provider làm OpenRouter không chạy được.
 
@@ -54,7 +54,7 @@ Agent 2 dùng `openai.chat.completions.create()` hoặc API tương thích có c
 | Rủi ro | Fallback được phép |
 |---|---|
 | Model chính lỗi | Đổi `OPENAI_MODEL` sang model dự phòng có tool calling |
-| OpenRouter timeout | Retry một lần; UI báo API unavailable, local marker vẫn dùng được |
+| Ollama/tunnel timeout hoặc 502 | Dùng direct localhost; nếu vẫn lỗi thì đổi env sang OpenRouter |
 | Tool calling không ổn định | Siết system prompt/tool schema; không tăng quá 3 steps |
 | Dynamic site capture nhiễu | Demo bằng article HTML tĩnh đã test |
 | Exact quote không tìm lại | Resume theo heading rồi scroll ratio |
@@ -73,4 +73,3 @@ Sau checkpoint 6:30:
 - chỉ sửa bug chặn E2E;
 - chạy `npm run verify` sau mỗi integration fix;
 - rehearsal bằng checkout/build hiện tại, không bằng dev state chưa commit.
-

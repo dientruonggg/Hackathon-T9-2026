@@ -1,6 +1,5 @@
-# Agent 3 TODO — Contracts
+# Contracts Status
 
-Task chuẩn: [`../../.agents/tasks/03-contracts-memory/TASK.md`](../../.agents/tasks/03-contracts-memory/TASK.md).
+Shared contracts đã triển khai và được dùng bởi cả extension/API. Proposal `ShortSession.tabId` đã được áp dụng; optional fields đã thống nhất với TypeScript `exactOptionalPropertyTypes`.
 
-Implement chính xác các type và schema trong `04-shared-contracts.md`, sau đó gửi commit này sớm cho Agent 1 và Agent 2.
-
+Không mở rộng schema trong MVP trừ khi golden E2E phát hiện lỗi boundary thật.

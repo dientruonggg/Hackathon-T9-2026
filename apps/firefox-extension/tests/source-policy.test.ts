@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { checkSourcePolicy } from "../src/policy/check-source-policy";
 
+const UPDATED_AT = "2026-09-12T00:00:00.000Z";
+
 describe("checkSourcePolicy", () => {
   it("allows a normal HTML documentation page", async () => {
     const result = await checkSourcePolicy({
       url: "https://developer.mozilla.org/en-US/docs/Web/API/Document",
       title: "Document",
       contentType: "text/html",
-      settings: { allowedDomains: [], blockedDomains: [] },
+      settings: { allowedDomains: [], blockedDomains: [], updatedAt: UPDATED_AT },
     });
 
     expect(result).toMatchObject({
@@ -30,7 +32,11 @@ describe("checkSourcePolicy", () => {
   ])("blocks %s", async (url, reasonCode) => {
     const result = await checkSourcePolicy({
       url,
-      settings: { allowedDomains: [new URL(url).hostname], blockedDomains: [] },
+      settings: {
+        allowedDomains: [new URL(url).hostname],
+        blockedDomains: [],
+        updatedAt: UPDATED_AT,
+      },
     });
 
     expect(result).toMatchObject({ ok: true, data: { decision: "BLOCK", reasonCode } });
@@ -39,7 +45,11 @@ describe("checkSourcePolicy", () => {
   it("lets a user block a domain and strips query data from safeUrl", async () => {
     const result = await checkSourcePolicy({
       url: "https://notes.example.com/article?token=secret#private",
-      settings: { blockedDomains: ["example.com"] },
+      settings: {
+        allowedDomains: [],
+        blockedDomains: ["example.com"],
+        updatedAt: UPDATED_AT,
+      },
     });
 
     expect(result).toMatchObject({
@@ -53,11 +63,13 @@ describe("checkSourcePolicy", () => {
   });
 
   it("rejects non-web protocols before capture", async () => {
-    const result = await checkSourcePolicy({ url: "about:config", settings: {} });
+    const result = await checkSourcePolicy({
+      url: "about:config",
+      settings: { allowedDomains: [], blockedDomains: [], updatedAt: UPDATED_AT },
+    });
     expect(result).toMatchObject({
       ok: true,
       data: { decision: "BLOCK", reasonCode: "NON_HTTP_PROTOCOL" },
     });
   });
 });
-

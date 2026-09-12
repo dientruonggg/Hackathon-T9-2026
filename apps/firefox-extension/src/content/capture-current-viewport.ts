@@ -1,3 +1,11 @@
+import type {
+  AppErrorCode,
+  CaptureLimits,
+  CaptureViewportInput,
+  Result,
+  ViewportContext,
+} from "@vlc/contracts";
+
 const DEFAULT_LIMITS = {
   maxTextChars: 4000,
   maxCodeBlocks: 3,
@@ -33,17 +41,6 @@ const EXCLUDED_CONTAINER_SELECTOR = [
   "[hidden]",
 ].join(",");
 
-type CaptureInput = {
-  tabId: number;
-  expectedUrl: string;
-  limits?: {
-    maxTextChars?: number | undefined;
-    maxCodeBlocks?: number | undefined;
-    maxCodeCharsPerBlock?: number | undefined;
-    maxAnchorQuoteChars?: number | undefined;
-  };
-};
-
 type CaptureEnvironment = {
   document: Document;
   locationHref: string;
@@ -54,7 +51,13 @@ type CaptureEnvironment = {
   crypto: Crypto;
 };
 
-export async function captureCurrentViewport(input: unknown) {
+type CaptureInput = CaptureViewportInput;
+
+export function captureCurrentViewport(
+  input: CaptureViewportInput,
+): Promise<Result<ViewportContext>>;
+export function captureCurrentViewport(input: unknown): Promise<Result<ViewportContext>>;
+export async function captureCurrentViewport(input: unknown): Promise<Result<ViewportContext>> {
   const parsed = parseCaptureInput(input);
   if (!parsed.ok) return parsed;
 
@@ -70,9 +73,9 @@ export async function captureCurrentViewport(input: unknown) {
 }
 
 export async function captureViewportFromEnvironment(
-  input: CaptureInput,
+  input: CaptureViewportInput,
   environment: CaptureEnvironment,
-) {
+): Promise<Result<ViewportContext>> {
   const currentUrl = parseHttpUrl(environment.locationHref);
   const expectedUrl = parseHttpUrl(input.expectedUrl);
   if (!currentUrl || !expectedUrl) {
@@ -196,11 +199,11 @@ function parseCaptureInput(input: unknown):
             },
           }
         : {}),
-    },
+    } as unknown as CaptureViewportInput,
   };
 }
 
-function normalizeLimits(input: CaptureInput["limits"]) {
+function normalizeLimits(input: CaptureLimits | undefined) {
   return {
     maxTextChars: Math.min(input?.maxTextChars ?? DEFAULT_LIMITS.maxTextChars, 4000),
     maxCodeBlocks: Math.min(input?.maxCodeBlocks ?? DEFAULT_LIMITS.maxCodeBlocks, 3),
@@ -310,7 +313,7 @@ function createId(cryptoApi: Crypto): string {
     : `ctx-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-function failure(code: string, message: string, retryable: boolean) {
+function failure(code: AppErrorCode, message: string, retryable: boolean): Result<never> {
   return { ok: false as const, error: { code, message, retryable } };
 }
 

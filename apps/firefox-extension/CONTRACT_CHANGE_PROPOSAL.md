@@ -1,5 +1,7 @@
 # Contract Change Proposal — `ShortSession.tabId`
 
+> Resolved 2026-09-12: Agent 3 đã thêm field này; Task 1 đang dùng nó cho stale refresh và resume.
+
 ## Vấn đề
 
 `runAskAgentPipeline()` phải capture lại viewport nếu URL/heading/scroll đã đổi. `captureCurrentViewport()` yêu cầu `tabId`, nhưng frozen `ShortSession` và `AskAgentPipelineInput` hiện không mang tab ID.
@@ -35,4 +37,3 @@ tabId: z.number().int().nonnegative()
 - Agent 1: open pipeline set `tabId`; ask/resume dùng nó.
 - Agent 2: không ảnh hưởng.
 - Agent 3: thêm một field/schema test.
-

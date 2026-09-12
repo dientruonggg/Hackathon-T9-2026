@@ -1,5 +1,7 @@
 # Task Agent 3 — Shared Contracts, Memory và Workspace
 
+> Status 2026-09-12: implementation đã được nối vào `main`; contracts/memory tests pass và storage keys đã chuẩn hóa. Xem `../../architecture/07-integration-status.md`.
+
 ## Mission
 
 Xây nền tảng dùng chung: npm workspaces, shared TypeScript/Zod contracts, browser-local memory repository, deterministic matcher và tests. Đây là nhánh merge đầu tiên.
