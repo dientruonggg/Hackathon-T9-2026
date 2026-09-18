@@ -11,6 +11,7 @@ import {
   type IdGenerator,
   type MemoryRepository,
   type StorageAreaLike,
+  type ExclusiveLock,
 } from "@vlc/memory";
 import {
   isAppError,
@@ -41,8 +42,12 @@ const storageAdapter: StorageAreaLike = {
   remove: async (keys) => browser.storage.local.remove(keys),
 };
 
+const markerLock: ExclusiveLock = {
+  run: (operation) => navigator.locks.request("vlc:markers:v1", operation),
+};
+
 export const memoryRepository: MemoryRepository =
-  createBrowserStorageMemoryRepository(storageAdapter, systemClock, browserIdGenerator);
+  createBrowserStorageMemoryRepository(storageAdapter, systemClock, browserIdGenerator, markerLock);
 
 export interface BrowserRuntimeServices {
   sendTabMessage?: (tabId: number, message: unknown) => Promise<unknown>;

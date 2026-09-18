@@ -10,15 +10,14 @@ import type {
   AgentTurnResponse,
   ChatMessage,
   MemoryStatus,
+  MemorySummary,
   ShortSession,
 } from "@vlc/contracts";
 import { checkSourcePolicy } from "../policy/check-source-policy";
 import { runAskAgentPipeline } from "../pipeline/ask-agent-pipeline";
-import {
-  executeConfirmedMemoryCommand,
-  executeConfirmedMemoryWithRecapture,
-} from "../pipeline/confirmed-memory-command";
+import { executeConfirmedMemoryWithRecapture } from "../pipeline/confirmed-memory-command";
 import { runOpenSidebarPipeline } from "../pipeline/open-sidebar-pipeline";
+import { canonicalTabUrl, createContextGeneration } from "./active-tab-context";
 import { requestAgentTurn } from "../services/agent-api-client";
 import {
   browserIdGenerator,
@@ -42,6 +41,8 @@ const askButton = requireElement<HTMLButtonElement>("#ask-button");
 const answerPanel = requireElement<HTMLElement>("#answer-panel");
 const answerContent = requireElement<HTMLElement>("#answer-content");
 const groundingLabel = requireElement<HTMLElement>("#grounding-label");
+const groundingSources = requireElement<HTMLElement>("#grounding-sources");
+const noteInput = requireElement<HTMLTextAreaElement>("#memory-note-input");
 const agentProposalPanel = requireElement<HTMLElement>("#agent-proposal-panel");
 const agentProposalText = requireElement<HTMLElement>("#agent-proposal-text");
 const acceptProposalButton = requireElement<HTMLButtonElement>("#accept-proposal-button");
@@ -52,6 +53,16 @@ const markerButtons = Array.from(
 
 let session: ShortSession | undefined;
 let busy = false;
+const contextGeneration = createContextGeneration();
+
+browser.tabs.onActivated.addListener(() => { if (!document.hidden) void syncActiveTab(); });
+browser.tabs.onUpdated.addListener((tabId, change) => {
+  if (!document.hidden && (!session || tabId === session.tabId) &&
+      (change.url !== undefined || change.status === "complete")) void syncActiveTab();
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) void syncActiveTab();
+});
 
 refreshContextButton.addEventListener("click", () => {
   void refreshViewportContext();
@@ -67,11 +78,22 @@ const emptyPageMarkers = requireElement<HTMLParagraphElement>("#empty-page-marke
 blockCurrentDomainButton.addEventListener("click", async () => {
   if (!session?.context || busy) return;
   setBusy(true);
-  const result = await blockCurrentDomain({ domain: session.context.source.hostname || session.context.source.canonicalUrl, userConfirmed: true }, { memoryRepository });
+  const bound = await bindActiveSession();
+  if (!bound.ok || bound.changed || !session?.context) {
+    if (bound.ok) {
+      renderShellStatus("Trang đã đổi. Kiểm tra domain rồi bấm chặn lại.", "danger");
+      setBusy(false);
+    }
+    return;
+  }
+  const requestSession = session;
+  const result = await blockCurrentDomain({ domain: requestSession.context!.source.hostname || requestSession.context!.source.canonicalUrl, userConfirmed: true }, { memoryRepository });
+  if (!(await stillOnBoundPage(requestSession, bound.generation))) return;
   if (result.ok) {
-    renderShellStatus("Đã chặn website này. Mở lại sidebar để áp dụng.", "success");
+    renderShellStatus("Đã chặn website này.", "success");
     blockCurrentDomainButton.disabled = true;
     await refreshPrivacyMemoryState();
+    void syncActiveTab();
   } else {
     renderShellStatus("Lỗi khi chặn website.", "danger");
   }
@@ -79,12 +101,13 @@ blockCurrentDomainButton.addEventListener("click", async () => {
 });
 
 async function refreshPrivacyMemoryState() {
-  if (!session?.context) return;
+  const current = session;
+  if (!current?.context) return;
   const result = await loadPrivacyMemoryState({
-    currentDomain: session.context.source.hostname || session.context.source.canonicalUrl,
-    relatedMemories: session.relatedMemories
+    currentDomain: current.context.source.hostname || current.context.source.canonicalUrl,
+    relatedMemories: current.relatedMemories
   }, { memoryRepository });
-  if (result.ok) {
+  if (session === current && result.ok) {
     renderPrivacyState(result.data);
   }
 }
@@ -132,26 +155,29 @@ function renderPrivacyState(state: PrivacyMemoryState) {
       const resumeBtn = document.createElement("button");
       resumeBtn.textContent = "Resume";
       resumeBtn.className = "text-button";
-      resumeBtn.onclick = async () => {
-        if (!session || busy) return;
-        setBusy(true);
-        const resumed = await resumeTabAtMarker({
-          tabId: session.tabId,
-          expectedCanonicalUrl: mem.source.canonicalUrl,
-          anchor: mem.anchor,
-        });
-        setBusy(false);
-      };
+      resumeBtn.onclick = () => { void resumeMemory(mem); };
 
       const delBtn = document.createElement("button");
       delBtn.textContent = "Xóa";
       delBtn.className = "text-button";
       delBtn.onclick = async () => {
-        if (!confirm("Bạn có chắc muốn xóa dấu mốc này?")) return;
+        if (busy) return;
         setBusy(true);
+        const bound = await bindActiveSession();
+        if (!bound.ok || bound.changed || !session?.relatedMemories.some(item => item.id === mem.id)) {
+          if (bound.ok) {
+            renderShellStatus("Trang đã đổi. Kiểm tra mốc rồi bấm xóa lại.", "danger");
+            setBusy(false);
+          }
+          return;
+        }
+        if (!confirm("Bạn có chắc muốn xóa dấu mốc này?")) { setBusy(false); return; }
+        const requestSession = session;
         const res = await forgetConfirmedMarker({ memoryId: mem.id, userConfirmed: true }, { memoryRepository });
+        if (!(await stillOnBoundPage(requestSession, bound.generation))) return;
         if (res.ok && res.data.deletedCount === 1) {
-          session!.relatedMemories = session!.relatedMemories.filter(m => m.id !== mem.id);
+          requestSession.relatedMemories = requestSession.relatedMemories.filter(item => item.id !== mem.id);
+          renderMemory(requestSession);
           await refreshPrivacyMemoryState();
         }
         setBusy(false);
@@ -188,43 +214,79 @@ acceptProposalButton.addEventListener("click", () => {
 void initializeSidebar();
 
 async function initializeSidebar(): Promise<void> {
+  await syncActiveTab();
+}
+
+async function syncActiveTab(): Promise<void> {
+  const generation = contextGeneration.next();
+  session = undefined;
+  clearPagePanels();
+  sourceBadge.textContent = "Đang kiểm tra";
+  sourceBadge.dataset.tone = "idle";
+  contextHeading.textContent = "Đang đọc trang hiện tại…";
+  contextPreview.textContent = "";
+  renderShellStatus("Đang chuyển ngữ cảnh sang tab hiện tại…");
   setBusy(true);
-  renderShellStatus("Đang kiểm tra trang hiện tại…");
+  await bindActiveSession(generation);
+  if (contextGeneration.isCurrent(generation)) setBusy(false);
+}
 
-  const tabResult = await getActiveTab();
-  if (!tabResult.ok) {
-    renderFatalError(tabResult.error.message);
-    return;
+async function bindActiveSession(generation = contextGeneration.next()): Promise<{ ok: true; changed: boolean; generation: number } | { ok: false }> {
+  const active = await getActiveTab();
+  if (!contextGeneration.isCurrent(generation)) return { ok: false };
+  if (!active.ok) {
+    renderFatalError(active.error.message);
+    return { ok: false };
   }
-
   const opened = await runOpenSidebarPipeline(
-    {
-      tabId: tabResult.data.id,
-      url: tabResult.data.url,
-      ...(tabResult.data.title === undefined ? {} : { title: tabResult.data.title }),
-    },
-    {
-      getPolicySettings: () => memoryRepository.getSourcePolicySettings(),
-      checkPolicy: checkSourcePolicy,
-      capture: captureTabViewport,
-      memoryRepository,
-      clock: systemClock,
-      idGenerator: browserIdGenerator,
-    },
+    { tabId: active.data.id, url: active.data.url,
+      ...(active.data.title === undefined ? {} : { title: active.data.title }) },
+    { getPolicySettings: () => memoryRepository.getSourcePolicySettings(),
+      checkPolicy: checkSourcePolicy, capture: captureTabViewport,
+      memoryRepository, clock: systemClock, idGenerator: browserIdGenerator },
   );
-
+  if (!contextGeneration.isCurrent(generation)) return { ok: false };
   if (!opened.ok) {
+    session = undefined;
+    clearPagePanels();
     renderFatalError(opened.error.message);
-    return;
+    return { ok: false };
   }
+  const previous = session;
+  const next = opened.data.session;
+  const changed = !previous || previous.tabId !== next.tabId ||
+    previous.context?.source.canonicalUrl !== next.context?.source.canonicalUrl ||
+    previous.policy?.safeUrl !== next.policy?.safeUrl;
+  if (!changed && previous) {
+    next.messages = previous.messages;
+    if (previous.pendingAction) next.pendingAction = previous.pendingAction;
+  } else {
+    clearPagePanels();
+    noteInput.value = "";
+  }
+  session = next;
+  renderSession(next);
+  return { ok: true, changed, generation };
+}
 
-  session = opened.data.session;
-  renderSession(session);
-  setBusy(false);
+async function stillOnBoundPage(bound: ShortSession, generation: number): Promise<boolean> {
+  const active = await getActiveTab();
+  return contextGeneration.isCurrent(generation) && active.ok && session === bound &&
+    active.data.id === bound.tabId &&
+    canonicalTabUrl(active.data.url) === bound.context?.source.canonicalUrl;
+}
+
+function clearPagePanels(): void {
+  answerPanel.hidden = true;
+  agentProposalPanel.hidden = true;
+  memoryCard.hidden = true;
+  pageMarkersList.replaceChildren();
+  emptyPageMarkers.hidden = false;
+  groundingSources.textContent = "";
 }
 
 async function askCurrentContext(): Promise<void> {
-  if (!session || busy) return;
+  if (busy) return;
   const question = questionInput.value.trim();
   if (!question) {
     renderShellStatus("Hãy nhập một câu hỏi về đoạn đang thấy.", "danger");
@@ -232,11 +294,17 @@ async function askCurrentContext(): Promise<void> {
   }
 
   setBusy(true);
-  session.status = "ASKING";
+  const bound = await bindActiveSession();
+  if (!bound.ok || !session?.context || session.policy?.decision !== "ALLOW") {
+    if (bound.ok) setBusy(false);
+    return;
+  }
+  const requestSession = session;
+  requestSession.status = "ASKING";
   renderShellStatus("Agent đang đọc context và suy nghĩ…");
 
   const response = await runAskAgentPipeline(
-    { question, session },
+    { question, session: requestSession },
     {
       capture: captureTabViewport,
       requestAgentTurn,
@@ -246,88 +314,77 @@ async function askCurrentContext(): Promise<void> {
     },
   );
 
+  if (!(await stillOnBoundPage(requestSession, bound.generation))) return;
+
   if (!response.ok) {
-    session.status = session.relatedMemories.length > 0 ? "READY_WITH_MEMORY" : "READY";
+    requestSession.status = requestSession.relatedMemories.length > 0 ? "READY_WITH_MEMORY" : "READY";
     renderShellStatus(response.error.message, "danger");
     setBusy(false);
     return;
   }
 
   // Cập nhật giao diện vị trí mới nhất đã recapture
-  if (session.context) {
-    contextHeading.textContent = session.context.anchor.heading || session.context.source.title;
-    contextPreview.textContent = session.context.visibleText;
-    renderMemory(session);
+  if (requestSession.context) {
+    contextHeading.textContent = requestSession.context.anchor.heading || requestSession.context.source.title;
+    contextPreview.textContent = requestSession.context.visibleText;
+    renderMemory(requestSession);
   }
 
   const nextMessages: ChatMessage[] = [
-    ...session.messages,
+    ...requestSession.messages,
     { role: "user", content: question },
     { role: "assistant", content: response.data.answer.slice(0, 2000) },
   ];
-  session.messages = nextMessages.slice(-10);
+  requestSession.messages = nextMessages.slice(-10);
   const suggestedAction = response.data.suggestedActions[0];
-  if (suggestedAction) session.pendingAction = suggestedAction;
-  else delete session.pendingAction;
-  session.status = "READY_WITH_ANSWER";
+  if (suggestedAction) requestSession.pendingAction = suggestedAction;
+  else delete requestSession.pendingAction;
+  requestSession.status = "READY_WITH_ANSWER";
   questionInput.value = "";
   renderAnswer(response.data);
-  renderShellStatus("Câu trả lời chỉ dùng viewport và bộ nhớ được hiển thị.", "success");
+  renderShellStatus("Câu trả lời dựa trên viewport và tối đa 5 mốc đã xác nhận từ website được phép.", "success");
   setBusy(false);
 }
 
 async function refreshViewportContext(): Promise<void> {
-  if (!session?.context || busy) return;
+  if (busy) return;
   setBusy(true);
-  renderShellStatus("Đang cập nhật vị trí mới nhất từ trang web…");
-
-  const refreshed = await captureTabViewport({
-    tabId: session.tabId,
-    expectedUrl: session.context.source.canonicalUrl,
-  });
-
-  if (!refreshed.ok) {
-    renderShellStatus(refreshed.error.message, "danger");
+  const bound = await bindActiveSession();
+  if (bound.ok) {
+    renderShellStatus("Đã cập nhật trang và vị trí hiện tại.", "success");
     setBusy(false);
-    return;
   }
-
-  session.context = refreshed.data;
-  contextHeading.textContent = session.context.anchor.heading || session.context.source.title;
-  contextPreview.textContent = session.context.visibleText;
-
-  const recalled = await memoryRepository.searchMemory({
-    source: session.context.source,
-    anchor: session.context.anchor,
-    limit: 5,
-  });
-  if (recalled.ok) {
-    session.relatedMemories = recalled.data;
-  }
-  session.status = session.relatedMemories.length > 0 ? "READY_WITH_MEMORY" : "READY";
-  renderMemory(session);
-  void refreshPrivacyMemoryState();
-  renderShellStatus("Đã cập nhật vị trí hiện tại thành công.", "success");
-  setBusy(false);
 }
 
 async function saveMarker(status: MemoryStatus): Promise<void> {
   if (!session?.context || busy) return;
   setBusy(true);
-  session.status = "SAVING";
+  const bound = await bindActiveSession();
+  if (!bound.ok || !session?.context || session.policy?.decision !== "ALLOW") {
+    if (bound.ok) setBusy(false);
+    return;
+  }
+  if (bound.changed) {
+    renderShellStatus("Trang đã đổi. Hãy xem lại nội dung rồi bấm lưu lần nữa.", "danger");
+    setBusy(false);
+    return;
+  }
+  const requestSession = session;
+  requestSession.status = "SAVING";
   renderShellStatus("Đang lưu dấu mốc vào Firefox…");
 
   const suggestedNote =
-    session.pendingAction?.payload.status === status
-      ? session.pendingAction.payload.note
+    requestSession.pendingAction?.payload.status === status
+      ? requestSession.pendingAction.payload.note
       : undefined;
+  const note = noteInput.value.trim().slice(0, 500) || suggestedNote;
 
   const saved = await executeConfirmedMemoryWithRecapture(
     {
       status,
-      session,
+      session: requestSession,
       userConfirmed: true,
-      ...(suggestedNote === undefined ? {} : { note: suggestedNote }),
+      ...(note ? { note } : {}),
     },
     {
       capture: captureTabViewport,
@@ -336,41 +393,58 @@ async function saveMarker(status: MemoryStatus): Promise<void> {
     },
   );
 
+  if (!(await stillOnBoundPage(requestSession, bound.generation))) return;
+
   if (!saved.ok) {
-    session.status = "ERROR";
+    requestSession.status = "ERROR";
     renderShellStatus(saved.error.message, "danger");
     setBusy(false);
     return;
   }
 
-  contextHeading.textContent = session.context.anchor.heading || session.context.source.title;
-  contextPreview.textContent = session.context.visibleText;
+  contextHeading.textContent = requestSession.context!.anchor.heading || requestSession.context!.source.title;
+  contextPreview.textContent = requestSession.context!.visibleText;
 
   const recalled = await memoryRepository.searchMemory({
-    source: session.context.source,
-    anchor: session.context.anchor,
+    source: requestSession.context!.source,
+    anchor: requestSession.context!.anchor,
     limit: 5,
   });
-  if (recalled.ok) session.relatedMemories = recalled.data;
-  delete session.pendingAction;
+  if (!(await stillOnBoundPage(requestSession, bound.generation))) return;
+  if (recalled.ok) requestSession.relatedMemories = recalled.data;
+  delete requestSession.pendingAction;
   agentProposalPanel.hidden = true;
-  session.status = "READY_WITH_MEMORY";
-  renderMemory(session);
+  requestSession.status = "READY_WITH_MEMORY";
+  noteInput.value = "";
+  renderMemory(requestSession);
   void refreshPrivacyMemoryState();
   renderShellStatus(`Đã lưu trên Firefox • revision ${saved.data.revision}`, "success");
   setBusy(false);
 }
 
 async function resumeFirstMemory(): Promise<void> {
-  const memory = session?.relatedMemories[0];
-  if (!session || !memory || busy) return;
+  await resumeMemory(session?.relatedMemories[0]);
+}
 
+async function resumeMemory(memory: MemorySummary | undefined): Promise<void> {
+  if (!memory || busy) return;
   setBusy(true);
+  const bound = await bindActiveSession();
+  if (!bound.ok || bound.changed || !session?.context ||
+      !session.relatedMemories.some(item => item.id === memory.id)) {
+    if (bound.ok) {
+      renderShellStatus("Trang đã đổi. Hãy kiểm tra mốc rồi bấm lại.", "danger");
+      setBusy(false);
+    }
+    return;
+  }
+  const requestSession = session;
   const resumed = await resumeTabAtMarker({
-    tabId: session.tabId,
+    tabId: requestSession.tabId,
     expectedCanonicalUrl: memory.source.canonicalUrl,
     anchor: memory.anchor,
   });
+  if (!(await stillOnBoundPage(requestSession, bound.generation))) return;
   if (!resumed.ok) {
     renderShellStatus(resumed.error.message, "danger");
   } else {
@@ -390,10 +464,10 @@ function renderSession(value: ShortSession): void {
   sourceBadge.dataset.tone = blocked ? "danger" : "success";
 
   if (blocked) {
+    clearPagePanels();
     contextHeading.textContent = "Trang này nằm ngoài phạm vi demo";
     contextPreview.textContent = value.policy?.userMessage ?? "Extension không đọc nguồn này.";
     renderShellStatus(contextPreview.textContent, "danger");
-    setBusy(false);
     return;
   }
 
@@ -417,6 +491,17 @@ function renderAnswer(response: AgentTurnResponse): void {
   answerPanel.hidden = false;
   answerContent.textContent = response.answer;
   groundingLabel.textContent = formatGrounding(response.grounding);
+  const sources = response.groundingRefs.map(ref => {
+    let hostname = "";
+    if (ref.url) {
+      try { hostname = new URL(ref.url).hostname; } catch { /* invalid source URL */ }
+    }
+    const kind = ref.kind === "MEMORY" ? "Mốc đã lưu" : ref.kind === "WEB" ? "Web" : "Trang hiện tại";
+    return `${kind}: ${ref.label}${hostname ? ` (${hostname})` : ""}`;
+  });
+  groundingSources.textContent = sources.length > 0
+    ? `Nguồn được truy hồi: ${sources.join(" • ")}`
+    : "Không có nguồn được truy hồi.";
 
   const suggestedAction = response.suggestedActions[0];
   if (suggestedAction && suggestedAction.type === "CONFIRM_MARKER") {
@@ -454,7 +539,7 @@ function setBusy(value: boolean): void {
 
 function updateControls(): void {
   const canUseContext = Boolean(session?.context && session.policy?.decision === "ALLOW");
-  refreshContextButton.disabled = busy || !canUseContext;
+  refreshContextButton.disabled = busy;
   questionInput.disabled = busy || !canUseContext;
   askButton.disabled = busy || !canUseContext;
   for (const button of markerButtons) button.disabled = busy || !canUseContext;

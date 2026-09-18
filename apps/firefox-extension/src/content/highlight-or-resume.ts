@@ -4,6 +4,7 @@ import type {
   HighlightOrResumeOutput,
   Result,
 } from "@vlc/contracts";
+import { getReadingScope, isUsableReadingRoot } from "./reading-scope";
 
 type ResumeInput = HighlightOrResumeInput;
 
@@ -11,6 +12,7 @@ type ResumeEnvironment = {
   document: Document;
   locationHref: string;
   innerHeight: number;
+  getComputedStyle(element: Element): CSSStyleDeclaration;
   scrollTo(options: ScrollToOptions): void;
   setTimeout(handler: () => void, timeout: number): number;
 };
@@ -26,6 +28,7 @@ export async function highlightOrResume(input: unknown): Promise<Result<Highligh
     document,
     locationHref: window.location.href,
     innerHeight: window.innerHeight,
+    getComputedStyle: window.getComputedStyle.bind(window),
     scrollTo: window.scrollTo.bind(window),
     setTimeout: window.setTimeout.bind(window),
   });
@@ -47,9 +50,11 @@ export async function highlightOrResumeInEnvironment(
     );
   }
 
-  const candidates = Array.from(
-    environment.document.querySelectorAll<HTMLElement>(RESUME_SELECTORS),
-  );
+  const candidates = getReadingScope(
+    environment.document,
+    RESUME_SELECTORS,
+    (root) => isUsableReadingRoot(root, environment.getComputedStyle),
+  ).candidates;
   const quote = normalize(parsed.data.anchor.textQuote);
   const quoteTarget = quote
     ? candidates.find((element) => normalize(element.textContent ?? "").includes(quote))

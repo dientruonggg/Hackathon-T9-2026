@@ -1,0 +1,45 @@
+VIEWPORT LEARNING COMPANION — 2-MINUTE PRESENTATION
+
+Team: Duy Toan, [Member 2], and [Member 3]
+
+SPEAKER 1 — INTRODUCTION
+
+Hello everyone. We are [team name], and our project is Viewport Learning Companion.
+
+When people study on the web, they often need to leave the page, copy a long text, and explain the context again to an AI chatbot. They can also forget what they learned or where they stopped.
+
+Our solution is a small learning agent inside the Firefox sidebar. It stays next to the learning page and helps the user without breaking their study flow.
+
+SPEAKER 2 — LIVE DEMO
+
+Here, we open a lesson on W3Schools and start our extension.
+
+The agent reads only the part of the page that is currently visible. We can ask a question about this part, and the agent uses the page context to give a focused answer.
+
+We can also select a difficult sentence or code example and ask the agent to explain it.
+
+After learning, we choose “Understood,” “Not understood,” or “Review later.” The extension then shows that the checkpoint was saved in Firefox. It stores the page, heading, text position, learning status, and a short question-and-answer summary.
+
+Now we can close and open the sidebar again. When we return to this page, the agent can find the saved checkpoint and help us continue from where we stopped.
+
+SPEAKER 3 — TECHNOLOGY AND VALUE
+
+This is different from a normal AI sidebar because it does not only answer one question. It builds a user-controlled learning memory.
+
+Recent chat is kept in short-term memory, while confirmed checkpoints are kept in Firefox local storage. The user decides what to save, and unwanted websites can be blocked.
+
+We built the MVP with TypeScript, Firefox WebExtensions, Vite, web-ext, Fastify, Zod, and an OpenAI-compatible Qwen3 8B model. TypeScript is built into JavaScript, and web-ext loads the extension into Firefox as a temporary add-on for our demo.
+
+In the future, we can connect learning across many pages, suggest what to review, and build a personal learning path.
+
+Thank you.
+
+DEMO ACTIONS
+
+1. Run: npm run demo:firefox
+2. Open a W3Schools lesson.
+3. Open the extension sidebar.
+4. Ask one question about the visible content.
+5. Select one short paragraph and ask for an explanation.
+6. Click “Review later” and show: “Đã lưu trên Firefox”.
+7. Close and reopen the sidebar to show the recalled checkpoint.

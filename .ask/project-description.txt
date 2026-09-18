@@ -1,0 +1,25 @@
+Viewport Learning Companion
+
+Team members: Duy Toan, [Member 2], and [Member 3]
+
+Viewport Learning Companion is a functional Firefox extension MVP designed to support people while they learn directly on the web. Instead of requiring users to copy an entire article into a separate chatbot, the agent works beside the page they are already reading.
+
+When activated, the extension reads the current viewport or selected text and uses that context to answer questions and explain difficult concepts. It keeps recent conversation context in short-term memory (RAM) and stores user-confirmed learning checkpoints in Firefox local storage. These checkpoints can include the page URL, heading, text anchor, reading position, understanding status, and a short question-and-answer summary.
+
+When users return to a previously studied page, the companion can recall relevant learning history and help them continue from where they stopped. Users remain in control: the extension does not continuously monitor browsing, memory is saved only after confirmation, and selected websites can be excluded from reading.
+
+The completed MVP demonstrates viewport capture, selected-text questions, contextual LLM responses, short-term conversational memory, persistent local learning memory, website access policies, and memory recall after reopening the extension. Its next direction is to support richer cross-page learning journeys, personalized review recommendations, and more reliable understanding assessment.
+
+The project is built with TypeScript, Firefox WebExtensions, Vite, web-ext, Fastify, Zod, Vitest, npm workspaces, and the OpenAI JavaScript SDK connected to an OpenAI-compatible Qwen3 8B model. The agent loop provides tools for reading viewport context, searching and reading memories, and proposing learning checkpoints. Persistent data is stored locally through Firefox browser.storage.local; the MVP does not require a vector database.
+
+Products and tools used:
+- OpenAI JavaScript SDK (OpenAI-compatible API integration)
+- Mozilla Firefox WebExtensions
+- Qwen3 8B
+- TypeScript
+- Vite
+- web-ext
+- Fastify
+- Zod
+- Vitest
+- npm workspaces

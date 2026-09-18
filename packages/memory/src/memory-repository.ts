@@ -25,7 +25,12 @@ export interface IdGenerator {
   createId(): string;
 }
 
+export interface ExclusiveLock {
+  run<T>(operation: () => Promise<T>): Promise<T>;
+}
+
 export interface MemoryRepository {
+  listMarkers(): Promise<Result<MemoryMarker[]>>;
   saveMarker(input: SaveMarkerInput): Promise<Result<MemoryMarker>>;
   searchMemory(input: SearchMemoryInput): Promise<Result<MemorySummary[]>>;
   readMemory(memoryId: string): Promise<Result<MemoryMarker | null>>;

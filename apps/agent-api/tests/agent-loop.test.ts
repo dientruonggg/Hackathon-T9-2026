@@ -146,6 +146,46 @@ describe("Slice 4: ReAct Agent Loop with Fake Provider", () => {
     }
   });
 
+  it("does not label an empty memory search as MEMORY grounding", async () => {
+    let calls = 0;
+    const provider: LlmProvider = {
+      async generate(): Promise<Result<LlmGenerateOutput>> {
+        calls += 1;
+        return calls === 1
+          ? { ok: true, data: { toolCalls: [{ id: "empty", name: "search_memory", arguments: { query: "unmatched" } }], model: { provider: "fake", name: "test" } } }
+          : { ok: true, data: { text: "Viewport only.", model: { provider: "fake", name: "test" } } };
+      },
+    };
+    const result = await runAgentTurn(dummyRequest, { provider });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data.grounding).toBe("VIEWPORT");
+  });
+
+  it("references the returned cross-site marker, not the first preloaded marker", async () => {
+    const other: MemorySummary = {
+      ...dummyMemory, id: "promise-other-site", status: "UNDERSTOOD", matchReason: "CROSS_SITE",
+      source: { canonicalUrl: "https://example.org/promise", safeUrl: "https://example.org/promise", hostname: "example.org", title: "Promise" },
+      anchor: { ...dummyMemory.anchor, heading: "Promise resolve reject" },
+      note: "I understand resolve and reject",
+    };
+    let calls = 0;
+    const provider: LlmProvider = {
+      async generate(): Promise<Result<LlmGenerateOutput>> {
+        calls += 1;
+        return calls === 1
+          ? { ok: true, data: { toolCalls: [{ id: "search", name: "search_memory", arguments: { query: "Promise" } }], model: { provider: "fake", name: "test" } } }
+          : { ok: true, data: { text: "You marked Promise understood.", model: { provider: "fake", name: "test" } } };
+      },
+    };
+    const result = await runAgentTurn({ ...dummyRequest, relatedMemories: [dummyMemory, other] }, { provider });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data.grounding).toBe("MEMORY");
+      expect(result.data.groundingRefs.some(ref => ref.kind === "MEMORY" && ref.refId === other.id && ref.url === other.source.safeUrl)).toBe(true);
+      expect(result.data.groundingRefs.some(ref => ref.refId === dummyMemory.id)).toBe(false);
+    }
+  });
+
   it("Scenario 3: Exceeding 3 model steps returns AGENT_MAX_STEPS error", async () => {
     // Fake provider that constantly returns a tool call
     const infiniteToolProvider: LlmProvider = {

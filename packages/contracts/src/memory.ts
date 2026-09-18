@@ -61,7 +61,8 @@ export interface MemoryMarker {
 export const MemoryMatchReasonSchema = z.enum([
   "EXACT_FINGERPRINT",
   "SAME_PAGE_HEADING",
-  "SAME_PAGE"
+  "SAME_PAGE",
+  "CROSS_SITE"
 ]);
 export type MemoryMatchReason = z.infer<typeof MemoryMatchReasonSchema>;
 

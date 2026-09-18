@@ -71,6 +71,7 @@ export async function runAgentTurn(
   ];
 
   const toolTrace: ToolTraceEntry[] = [];
+  const returnedMemoryIds = new Set<string>();
   const suggestedActions: PendingUserAction[] = [];
   let finalAnswer: string | undefined;
   let lastModel = { provider: "unknown", name: "unknown" };
@@ -115,6 +116,18 @@ export async function runAgentTurn(
             toolName: tc.name as AgentToolName,
             status: "SUCCESS"
           });
+
+          if (tc.name === "search_memory" && Array.isArray(toolResult.data)) {
+            for (const item of toolResult.data) {
+              if (typeof item === "object" && item !== null && "id" in item && typeof item.id === "string") {
+                returnedMemoryIds.add(item.id);
+              }
+            }
+          }
+          if (tc.name === "read_memory" && typeof toolResult.data === "object" &&
+              toolResult.data !== null && "id" in toolResult.data && typeof toolResult.data.id === "string") {
+            returnedMemoryIds.add(toolResult.data.id);
+          }
 
           deps.observer?.emit({
             event: "agent.tool.completed",
@@ -177,9 +190,8 @@ export async function runAgentTurn(
 
   // Determine GroundingKind
   let grounding: GroundingKind = "VIEWPORT";
-  const hasMemoryTool = toolTrace.some(
-    (t) => (t.toolName === "search_memory" || t.toolName === "read_memory") && t.status === "SUCCESS"
-  );
+  const returnedMemories = input.relatedMemories.filter(memory => returnedMemoryIds.has(memory.id));
+  const hasMemoryTool = returnedMemories.length > 0;
   const hasWebTool = toolTrace.some(
     (t) => t.toolName === "search_web" && t.status === "SUCCESS"
   );
@@ -203,12 +215,20 @@ export async function runAgentTurn(
       url: input.context.source.safeUrl
     });
   } else if (grounding === "MEMORY") {
-    const mem = input.relatedMemories[0];
     groundingRefs.push({
-      kind: "MEMORY",
-      refId: mem?.id ?? "memory-ref",
-      label: mem?.anchor.heading || "Ký ức liên quan"
+      kind: "VIEWPORT",
+      refId: input.context.contextId,
+      label: input.context.anchor.heading || input.context.source.title,
+      url: input.context.source.safeUrl,
     });
+    for (const memory of returnedMemories.slice(0, 3)) {
+      groundingRefs.push({
+        kind: "MEMORY",
+        refId: memory.id,
+        label: `${memory.anchor.heading || memory.source.title} — ${memory.status}`,
+        url: memory.source.safeUrl,
+      });
+    }
   } else if (grounding === "WEB") {
     groundingRefs.push({
       kind: "WEB",

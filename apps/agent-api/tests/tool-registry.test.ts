@@ -140,6 +140,23 @@ describe("Slice 2: System Prompt & Pure Tool Registry", () => {
     }
   });
 
+  it("can search and read a bounded marker from another website", async () => {
+    const other: MemorySummary = {
+      ...dummyMemories[0]!, id: "promise-other-site", matchReason: "CROSS_SITE",
+      source: { canonicalUrl: "https://example.org/promise", safeUrl: "https://example.org/promise", hostname: "example.org", title: "Promise" },
+      anchor: { ...dummyContext.anchor, heading: "Promise resolve reject" },
+    };
+    const registry = createAgentToolRegistry({ ...makeTurnContext(), relatedMemories: [...dummyMemories, other] });
+    const all = await registry.get("search_memory")!.execute({ query: "all" });
+    expect(all.ok).toBe(true);
+    if (all.ok) expect((all.data as MemorySummary[]).map(item => item.id)).toContain(other.id);
+    const read = await registry.get("read_memory")!.execute({ memoryId: other.id });
+    expect(read.ok).toBe(true);
+    if (read.ok) expect((read.data as MemorySummary).source.hostname).toBe("example.org");
+    const missing = await registry.get("read_memory")!.execute({ memoryId: "not-preloaded" });
+    expect(missing.ok).toBe(false);
+  });
+
   it("propose_marker returns PendingUserAction proposal", async () => {
     const registry = createAgentToolRegistry(makeTurnContext());
     const tool = registry.get("propose_marker");

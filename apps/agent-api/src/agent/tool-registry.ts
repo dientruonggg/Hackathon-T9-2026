@@ -70,7 +70,7 @@ export function createAgentToolRegistry(
   // 2. search_memory
   tools.set("search_memory", {
     name: "search_memory",
-    description: "Tìm kiếm dấu mốc trong danh sách các ký ức liên quan được preload sẵn cho section này.",
+    description: "Tìm trong tối đa 5 dấu mốc do người học xác nhận, được extension chọn cho lượt hỏi này. Mốc có thể đến từ trang đang xem hoặc website khác; query='all' liệt kê toàn bộ ứng viên.",
     parameters: {
       type: "object",
       properties: {

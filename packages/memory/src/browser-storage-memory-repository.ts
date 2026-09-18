@@ -4,7 +4,7 @@ import type {
   UpdateUnderstandingInput, ForgetMemoryInput, ForgetMemoryOutput, 
   SourcePolicySettings, UpdateSourcePolicyInput
 } from "@vlc/contracts";
-import type { StorageAreaLike, Clock, IdGenerator, MemoryRepository } from "./memory-repository.js";
+import type { StorageAreaLike, Clock, IdGenerator, MemoryRepository, ExclusiveLock } from "./memory-repository.js";
 import { matchMemories } from "./memory-matcher.js";
 
 export const MEMORY_STORAGE_KEYS = {
@@ -17,8 +17,9 @@ export function createBrowserStorageMemoryRepository(
   storage: StorageAreaLike,
   clock: Clock,
   idGenerator: IdGenerator,
+  markerLock: ExclusiveLock,
 ): MemoryRepository {
-  return new BrowserStorageMemoryRepository(storage, clock, idGenerator);
+  return new BrowserStorageMemoryRepository(storage, clock, idGenerator, markerLock);
 }
 
 function stripUndefined<T extends object>(obj: T): T {
@@ -35,8 +36,17 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
   constructor(
     private readonly storage: StorageAreaLike,
     private readonly clock: Clock,
-    private readonly idGenerator: IdGenerator
+    private readonly idGenerator: IdGenerator,
+    private readonly markerLock: ExclusiveLock,
   ) {}
+
+  async listMarkers(): Promise<Result<MemoryMarker[]>> {
+    try {
+      return { ok: true, data: await this.getAllMarkers() };
+    } catch (error: unknown) {
+      return { ok: false, error: { code: "INTERNAL_ERROR", message: error instanceof Error ? error.message : "Memory read failed", retryable: true } };
+    }
+  }
 
   private async getMarkerRecord(): Promise<Record<string, MemoryMarker>> {
     const data = await this.storage.get(MEMORY_STORAGE_KEYS.markers);
@@ -50,6 +60,7 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
 
   async saveMarker(input: SaveMarkerInput): Promise<Result<MemoryMarker>> {
     try {
+      return await this.markerLock.run(async () => {
       const now = this.clock.now().toISOString();
       const markerRecord = await this.getMarkerRecord();
       const markers = Object.values(markerRecord);
@@ -95,6 +106,7 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
         [MEMORY_STORAGE_KEYS.markers]: { ...markerRecord, [marker.id]: marker }
       });
       return { ok: true, data: marker };
+      });
     } catch (e: any) {
       return { ok: false, error: { code: "MEMORY_WRITE_FAILED", message: e.message, retryable: true } };
     }
@@ -122,6 +134,7 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
 
   async updateUnderstanding(input: UpdateUnderstandingInput): Promise<Result<MemoryMarker>> {
     try {
+      return await this.markerLock.run(async () => {
       const markers = await this.getMarkerRecord();
       const existing = markers[input.memoryId];
       if (!existing) {
@@ -144,6 +157,7 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
         [MEMORY_STORAGE_KEYS.markers]: { ...markers, [input.memoryId]: updated }
       });
       return { ok: true, data: updated };
+      });
     } catch (e: any) {
       return { ok: false, error: { code: "MEMORY_WRITE_FAILED", message: e.message, retryable: true } };
     }
@@ -151,6 +165,7 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
 
   async forgetMemory(input: ForgetMemoryInput): Promise<Result<ForgetMemoryOutput>> {
     try {
+      return await this.markerLock.run(async () => {
       const markers = await this.getMarkerRecord();
       const idsToDelete: string[] = [];
 
@@ -177,6 +192,7 @@ class BrowserStorageMemoryRepository implements MemoryRepository {
       }
 
       return { ok: true, data: { deletedCount: idsToDelete.length } };
+      });
     } catch (e: any) {
       return { ok: false, error: { code: "MEMORY_WRITE_FAILED", message: e.message, retryable: true } };
     }

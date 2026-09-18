@@ -5,6 +5,7 @@ import type {
   Result,
   ViewportContext,
 } from "@vlc/contracts";
+import { getReadingScope, isUsableReadingRoot, NON_READING_SELECTOR } from "./reading-scope";
 
 const DEFAULT_LIMITS = {
   maxTextChars: 4000,
@@ -12,34 +13,6 @@ const DEFAULT_LIMITS = {
   maxCodeCharsPerBlock: 1000,
   maxAnchorQuoteChars: 240,
 } as const;
-
-const TEXT_SELECTOR = [
-  "h1",
-  "h2",
-  "h3",
-  "h4",
-  "h5",
-  "h6",
-  "p",
-  "li",
-  "pre",
-  "code",
-  "blockquote",
-  "td",
-  "th",
-  "figcaption",
-].join(",");
-
-const EXCLUDED_CONTAINER_SELECTOR = [
-  "script",
-  "style",
-  "noscript",
-  "nav",
-  "footer",
-  "form",
-  "[aria-hidden='true']",
-  "[hidden]",
-].join(",");
 
 type CaptureEnvironment = {
   document: Document;
@@ -94,9 +67,15 @@ export async function captureViewportFromEnvironment(
   }
 
   const limits = normalizeLimits(input.limits);
-  const candidates = Array.from(
-    environment.document.querySelectorAll<HTMLElement>(TEXT_SELECTOR),
-  ).filter((element) => isReadableVisibleElement(element, environment));
+  const readingScope = getReadingScope(
+    environment.document,
+    undefined,
+    (root) => isUsableReadingRoot(root, environment.getComputedStyle),
+  );
+  const { root, regions } = readingScope;
+  const candidates = readingScope.candidates.filter((element) =>
+    isReadableVisibleElement(element, environment),
+  );
 
   const visibleHeadings = candidates.filter((element) =>
     /^H[1-6]$/.test(element.tagName),
@@ -145,12 +124,20 @@ export async function captureViewportFromEnvironment(
 
   const safeUrl = toSafeUrl(currentUrl);
 
-  const rawSelection = environment.getSelection ? environment.getSelection()?.toString() : "";
-  const selectedText = normalizeWhitespace(rawSelection ?? "").slice(0, 1000);
-
-  const textQuote = selectedText
-    ? selectedText.slice(0, limits.maxAnchorQuoteChars)
-    : visibleText.slice(0, limits.maxAnchorQuoteChars);
+  const selectedText = selectedTextWithinScope(environment.getSelection?.() ?? null, root, regions);
+  const quoteSource = candidates.find(
+    (element) =>
+      ["P", "BLOCKQUOTE"].includes(element.tagName) &&
+      normalizeWhitespace(element.textContent ?? ""),
+  ) ?? candidates.find(
+    (element) =>
+      !/^H[1-6]$/.test(element.tagName) &&
+      !isCodeElement(element) &&
+      normalizeWhitespace(element.textContent ?? ""),
+  );
+  const textQuote = (
+    selectedText || normalizeWhitespace(quoteSource?.textContent ?? "") || visibleText
+  ).slice(0, limits.maxAnchorQuoteChars);
 
   const finalVisibleText = selectedText
     ? `[Đoạn được bôi đen]\n${selectedText}\n\n[Toàn bộ viewport]\n${visibleText}`.slice(0, limits.maxTextChars).trim()
@@ -235,7 +222,6 @@ function isReadableVisibleElement(
   element: HTMLElement,
   environment: CaptureEnvironment,
 ): boolean {
-  if (element.closest(EXCLUDED_CONTAINER_SELECTOR)) return false;
   if (element.tagName === "CODE" && element.closest("pre")) return false;
 
   const style = environment.getComputedStyle(element);
@@ -248,14 +234,29 @@ function isReadableVisibleElement(
   }
 
   const rect = element.getBoundingClientRect();
-  return (
-    rect.width > 0 &&
-    rect.height > 0 &&
-    rect.bottom > 0 &&
-    rect.right > 0 &&
-    rect.top < environment.innerHeight &&
-    rect.left < environment.innerWidth
-  );
+  let left = Math.max(rect.left, 0);
+  let right = Math.min(rect.right, environment.innerWidth);
+  let top = Math.max(rect.top, 0);
+  let bottom = Math.min(rect.bottom, environment.innerHeight);
+  if (right <= left || bottom <= top) return false;
+
+  for (let parent = element.parentElement; parent; parent = parent.parentElement) {
+    const parentStyle = environment.getComputedStyle(parent);
+    if (!/(auto|scroll|hidden|clip)/.test(`${parentStyle.overflowX} ${parentStyle.overflowY}`)) {
+      continue;
+    }
+    const parentRect = parent.getBoundingClientRect();
+    if (/(auto|scroll|hidden|clip)/.test(parentStyle.overflowX || "")) {
+      left = Math.max(left, parentRect.left);
+      right = Math.min(right, parentRect.right);
+    }
+    if (/(auto|scroll|hidden|clip)/.test(parentStyle.overflowY || "")) {
+      top = Math.max(top, parentRect.top);
+      bottom = Math.min(bottom, parentRect.bottom);
+    }
+    if (right <= left || bottom <= top) return false;
+  }
+  return true;
 }
 
 function isCodeElement(element: HTMLElement): boolean {
@@ -264,6 +265,19 @@ function isCodeElement(element: HTMLElement): boolean {
 
 function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function selectedTextWithinScope(
+  selection: Selection | null,
+  root: Document | HTMLElement,
+  regions?: HTMLElement[],
+): string {
+  if (!selection?.rangeCount || typeof selection.getRangeAt !== "function") return "";
+  const container = selection.getRangeAt(0).commonAncestorContainer;
+  const element = container.nodeType === 1 ? container as Element : container.parentElement;
+  if (!element || !root.contains(container) || element.closest(NON_READING_SELECTOR) ||
+    (regions && !regions.some((region) => region.contains(container)))) return "";
+  return normalizeWhitespace(selection.toString()).slice(0, 1000);
 }
 
 function normalizeCode(value: string): string {

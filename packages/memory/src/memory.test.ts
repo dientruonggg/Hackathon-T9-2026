@@ -4,7 +4,7 @@ import {
   matchMemories,
   MEMORY_STORAGE_KEYS
 } from "./index.js";
-import type { StorageAreaLike, Clock, IdGenerator } from "./memory-repository.js";
+import type { StorageAreaLike, Clock, IdGenerator, ExclusiveLock } from "./memory-repository.js";
 import type { MemoryMarker } from "@vlc/contracts";
 
 class MockStorage implements StorageAreaLike {
@@ -39,13 +39,25 @@ class MockIdGen implements IdGenerator {
   createId() { return `id-${this.id++}`; }
 }
 
+class TestLock implements ExclusiveLock {
+  private tail: Promise<void> = Promise.resolve();
+
+  async run<T>(operation: () => Promise<T>): Promise<T> {
+    const previous = this.tail;
+    let release!: () => void;
+    this.tail = new Promise<void>(resolve => { release = resolve; });
+    await previous;
+    try { return await operation(); } finally { release(); }
+  }
+}
+
 describe("Memory package", () => {
   let storage: MockStorage;
   let repo: ReturnType<typeof createBrowserStorageMemoryRepository>;
 
   beforeEach(() => {
     storage = new MockStorage();
-    repo = createBrowserStorageMemoryRepository(storage, new MockClock(), new MockIdGen());
+    repo = createBrowserStorageMemoryRepository(storage, new MockClock(), new MockIdGen(), new TestLock());
   });
 
   const baseInput = {
@@ -55,6 +67,23 @@ describe("Memory package", () => {
     evidence: { kind: "USER_MARK" as const, summary: "E", createdAt: "2026-09-12T12:00:00Z" },
     userConfirmed: true as const
   };
+
+  it("keeps both sites under concurrent writes and lists the legacy record", async () => {
+    const lock = new TestLock();
+    const first = createBrowserStorageMemoryRepository(storage, new MockClock(), new MockIdGen(), lock);
+    const second = createBrowserStorageMemoryRepository(storage, new MockClock(), { createId: () => "id-site-b" }, lock);
+    const results = await Promise.all([
+      first.saveMarker(baseInput),
+      second.saveMarker({ ...baseInput, source: { ...baseInput.source, canonicalUrl: "https://other.example/async" } }),
+    ]);
+    expect(results.every(result => result.ok)).toBe(true);
+    const listed = await first.listMarkers();
+    expect(listed.ok).toBe(true);
+    if (listed.ok) expect(listed.data.map(marker => marker.source.canonicalUrl).sort()).toEqual([
+      "https://ex.com", "https://other.example/async",
+    ]);
+    expect(storage.data).toHaveProperty(MEMORY_STORAGE_KEYS.markers);
+  });
 
   it("saveMarker saves new marker and updates existing without duplication", async () => {
     const res1 = await repo.saveMarker(baseInput);

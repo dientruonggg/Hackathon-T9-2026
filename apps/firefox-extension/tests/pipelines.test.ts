@@ -104,6 +104,42 @@ describe("runOpenSidebarPipeline", () => {
 });
 
 describe("ask pipeline", () => {
+  it("includes allowed cross-site memory but excludes a blocked source", async () => {
+    const context = makeContext();
+    const promise = makeMarker(context);
+    promise.id = "promise";
+    promise.source = { ...promise.source, canonicalUrl: "https://w3schools.com/js/js_promise.asp", safeUrl: "https://w3schools.com/js/js_promise.asp", hostname: "w3schools.com", title: "Promise" };
+    const blocked = makeMarker(context);
+    blocked.id = "blocked";
+    blocked.source = { ...blocked.source, canonicalUrl: "https://blocked.example/lesson", safeUrl: "https://blocked.example/lesson", hostname: "blocked.example" };
+    const requestAgentTurn = vi.fn(async (_request: ReturnType<typeof buildAgentTurnRequest>) => ({ ok: true as const, data: makeAgentResponse() }));
+    await runAskAgentPipeline(
+      { question: "How does Promise relate?", session: makeSession(context) },
+      { capture: async () => ({ ok: true, data: context }), requestAgentTurn, clock, idGenerator,
+        memoryRepository: fakeRepository({
+          listMarkers: async () => ({ ok: true, data: [promise, blocked] }),
+          getSourcePolicySettings: async () => ({ ok: true, data: { ...settings, blockedDomains: ["blocked.example"] } }),
+        }),
+      },
+    );
+    expect(requestAgentTurn.mock.calls[0]?.[0].relatedMemories.map(item => item.id)).toEqual(["promise"]);
+  });
+
+  it("aborts before HTTP and clears stale page memory when recall fails", async () => {
+    const context = makeContext();
+    const session = makeSession(context);
+    session.relatedMemories = [makeMemorySummary(context)];
+    const requestAgentTurn = vi.fn();
+    const result = await runAskAgentPipeline(
+      { question: "What do I know?", session },
+      { capture: async () => ({ ok: true, data: context }), requestAgentTurn, clock, idGenerator,
+        memoryRepository: fakeRepository({ searchMemory: async () => ({ ok: false, error: { code: "INTERNAL_ERROR", message: "read failed", retryable: true } }) }),
+      },
+    );
+    expect(result.ok).toBe(false);
+    expect(session.relatedMemories).toEqual([]);
+    expect(requestAgentTurn).not.toHaveBeenCalled();
+  });
   it("builds a request accepted by the shared schema and omits browser tabId", () => {
     const request = buildAgentTurnRequest({
       turnId: "turn-1",
@@ -126,7 +162,7 @@ describe("ask pipeline", () => {
     }));
     const result = await runAskAgentPipeline(
       { question: "Giải thích agent loop", session: makeSession(context) },
-      { capture, requestAgentTurn, clock, idGenerator },
+      { capture, requestAgentTurn, clock, idGenerator, memoryRepository: fakeRepository() },
     );
 
     expect(result).toMatchObject({ ok: true, data: { answer: "Agent loop gọi tool rồi quan sát kết quả." } });
@@ -146,7 +182,7 @@ describe("ask pipeline", () => {
 
     await runAskAgentPipeline(
       { question: "Tiếp tục", session },
-      { capture, requestAgentTurn, clock, idGenerator },
+      { capture, requestAgentTurn, clock, idGenerator, memoryRepository: fakeRepository() },
     );
 
     expect(capture).toHaveBeenCalledWith({
@@ -172,6 +208,7 @@ describe("ask pipeline", () => {
         requestAgentTurn,
         clock,
         idGenerator,
+        memoryRepository: fakeRepository(),
       },
     );
 
@@ -404,6 +441,7 @@ function fakeRepository(overrides: Partial<MemoryRepository> = {}): MemoryReposi
     error: { code: "INTERNAL_ERROR" as const, message: "Not configured", retryable: false },
   });
   return {
+    listMarkers: overrides.listMarkers ?? (async () => ({ ok: true, data: [] })),
     saveMarker: overrides.saveMarker ?? missing,
     searchMemory: overrides.searchMemory ?? (async () => ({ ok: true, data: [] })),
     readMemory: overrides.readMemory ?? missing,

@@ -315,6 +315,19 @@ textarea:disabled {
   white-space: pre-wrap;
 }
 
+.privacy-hint,
+.grounding-sources {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.marker-panel label {
+  font-size: 12px;
+  font-weight: 650;
+}
+
 .grounding-label {
   color: var(--blue);
   border-color: #bdcaff;
